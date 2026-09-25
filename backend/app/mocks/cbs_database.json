@@ -1,0 +1,20 @@
+{
+  "accounts": [
+    {
+      "account_number": "SBI-9012841029",
+      "holder_name": "Vaidik Lahoria",
+      "balance": 142500.00,
+      "transactions": [
+        {
+          "txn_id": "TXN25000",
+          "utr": "UTR9832482348",
+          "amount": 25000.00,
+          "type": "DEBIT",
+          "status": "SUCCESS",
+          "timestamp": "2026-09-24T14:10:02Z",
+          "beneficiary": "MegaRetail Online"
+        }
+      ]
+    }
+  ]
+}

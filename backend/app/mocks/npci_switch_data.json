@@ -1,0 +1,14 @@
+{
+  "switch_network_logs": [
+    {
+      "utr": "UTR9832482348",
+      "remitter_bank_code": "SBIN",
+      "beneficiary_bank_code": "HDFC",
+      "amount": 25000.00,
+      "switch_status": "TIMEOUT_DEEMED_SUCCESS",
+      "npci_response_code": "U69",
+      "reason": "Beneficiary Bank Switch Timeout",
+      "timestamp": "2026-09-24T14:10:05Z"
+    }
+  ]
+}

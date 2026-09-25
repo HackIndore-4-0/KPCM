@@ -1,0 +1,13 @@
+{
+  "merchant_orders": [
+    {
+      "order_id": "ORD-9912",
+      "merchant_name": "MegaRetail Online",
+      "expected_amount": 25000.00,
+      "amount_received": 0.00,
+      "payment_status": "PAYMENT_NOT_CREDITED",
+      "order_status": "CANCELLED_UNPAID",
+      "timestamp": "2026-09-24T14:15:00Z"
+    }
+  ]
+}
