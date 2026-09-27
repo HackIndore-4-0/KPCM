@@ -11,6 +11,7 @@ from core.telemetry import (
     llm_calls_counter,
     llm_tokens_counter,
 )
+from safety.circuit_breaker import ExecutionHalted, get_active_circuit_breaker
 
 T = TypeVar("T", bound=BaseModel)
 
@@ -129,6 +130,12 @@ def llm_call(
             llm_tokens_counter.add(out_tokens, {"token_type": "output", "model": model, "node": eff_node or "unknown"})
             llm_tokens_counter.add(tot_tokens, {"token_type": "total", "model": model, "node": eff_node or "unknown"})
 
+            breaker = get_active_circuit_breaker()
+            if breaker:
+                decision = breaker.record_tokens(tot_tokens, eff_node)
+                if decision.action == "HALT":
+                    raise ExecutionHalted(decision)
+
             return LLMResponse(
                 content=content,
                 structured_output=structured_data,
@@ -143,6 +150,8 @@ def llm_call(
                 run_id=run_id,
             )
 
+        except ExecutionHalted:
+            raise
         except Exception as exc:
             try:
                 latency = round(time.perf_counter() - start_time, 4)

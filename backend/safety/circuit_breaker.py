@@ -24,11 +24,18 @@ class BreakerDecision:
         return asdict(self)
 
 
+class ExecutionHalted(Exception):
+    """Internal control-flow signal caught by the LangGraph node boundary."""
+    def __init__(self, decision: BreakerDecision):
+        self.decision = decision
+        super().__init__(decision.reason)
+
+
 class CircuitBreaker:
     def __init__(self, max_consecutive_tool_failures=None, max_token_budget=None, max_iterations=None):
-        self.max_consecutive_tool_failures = max_consecutive_tool_failures or settings.max_consecutive_tool_failures
-        self.max_token_budget = max_token_budget or settings.max_token_budget
-        self.max_iterations = max_iterations or settings.max_iterations
+        self.max_consecutive_tool_failures = settings.max_consecutive_tool_failures if max_consecutive_tool_failures is None else max_consecutive_tool_failures
+        self.max_token_budget = settings.max_token_budget if max_token_budget is None else max_token_budget
+        self.max_iterations = settings.max_iterations if max_iterations is None else max_iterations
         self.iteration = 0
         self.total_tokens = 0
         self.consecutive_failures = 0

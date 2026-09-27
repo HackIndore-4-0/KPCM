@@ -12,6 +12,7 @@ from core.telemetry import (
     tool_failures_counter,
     consecutive_failures_gauge,
 )
+from safety.circuit_breaker import ExecutionHalted, get_active_circuit_breaker
 
 
 class ToolResult(BaseModel):
@@ -75,6 +76,10 @@ def execute_instrumented_tool(
             latency = round(time.perf_counter() - start_time, 4)
 
             consecutive_failures = ToolExecutionTracker.record_result(success=True)
+            breaker = get_active_circuit_breaker()
+            decision = None
+            if breaker:
+                decision = breaker.record_tool_result(True, tool_name, eff_node, eff_iteration)
 
             span.set_attributes(
                 get_standard_attributes(
@@ -96,6 +101,9 @@ def execute_instrumented_tool(
                 {"tool_name": tool_name, "node": eff_node or "unknown", "status": "SUCCESS"},
             )
 
+            if decision and decision.action == "HALT":
+                raise ExecutionHalted(decision)
+
             return ToolResult(
                 tool_name=tool_name,
                 success=True,
@@ -107,12 +115,18 @@ def execute_instrumented_tool(
                 run_id=run_id,
             )
 
+        except ExecutionHalted:
+            raise
         except Exception as exc:
             latency = round(time.perf_counter() - start_time, 4)
             err_type = type(exc).__name__
             err_msg = str(exc)
 
             consecutive_failures = ToolExecutionTracker.record_result(success=False)
+            breaker = get_active_circuit_breaker()
+            decision = None
+            if breaker:
+                decision = breaker.record_tool_result(False, tool_name, eff_node, eff_iteration)
 
             span.set_attributes(
                 get_standard_attributes(
@@ -142,6 +156,9 @@ def execute_instrumented_tool(
                 {"tool_name": tool_name, "node": eff_node or "unknown", "error_type": err_type},
             )
             consecutive_failures_gauge.add(1, {"tool_name": tool_name})
+
+            if decision and decision.action == "HALT":
+                raise ExecutionHalted(decision) from exc
 
             return ToolResult(
                 tool_name=tool_name,
