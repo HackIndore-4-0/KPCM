@@ -20,8 +20,8 @@ export const SubmitGrievance: React.FC<SubmitGrievanceProps> = ({ onNavigate, la
   const [amount, setAmount] = useState<number>(1499);
   const [rrn, setRrn] = useState<string>('408219482910');
   const [demoScenario, setDemoScenario] = useState<string>('timeout');
-  const [maxFailures, setMaxFailures] = useState<number>(3);
-  const [maxTokens, setMaxTokens] = useState<number>(50000);
+  const [maxFailures, setMaxFailures] = useState<number>(4);
+  const [maxTokens, setMaxTokens] = useState<number>(10000);
   const [maxIterations, setMaxIterations] = useState<number>(10);
   
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
@@ -35,21 +35,24 @@ export const SubmitGrievance: React.FC<SubmitGrievanceProps> = ({ onNavigate, la
       setRrn('408219482910');
       setComplaint('My account was debited ₹1,499 via UPI to Swiggy on 28 Sep 14:32, but merchant app shows payment pending/expired. RRN: 408219482910.');
       setDemoScenario('timeout');
-      setMaxFailures(3);
+      setMaxFailures(4);
+      setMaxTokens(10000);
     } else if (preset === 'clean') {
       setCaseId('CASE-2026-3108');
       setAmount(450);
       setRrn('329184029182');
       setComplaint('I claim ₹450 was debited twice at Cafe Coffee Day. Please refund the duplicate debit. RRN: 329184029182.');
       setDemoScenario('clean');
-      setMaxFailures(3);
+      setMaxFailures(4);
+      setMaxTokens(10000);
     } else if (preset === 'high_value') {
       setCaseId('CASE-2026-8812');
       setAmount(85000);
       setRrn('992019482711');
       setComplaint('Transferred ₹85,000 for vendor inventory via NEFT/IMPS. Vendor claims non-receipt after 6 hours. RRN: 992019482711.');
       setDemoScenario('high_value');
-      setMaxFailures(3);
+      setMaxFailures(4);
+      setMaxTokens(10000);
     } else if (preset === 'breaker_trip') {
       setCaseId('CASE-2026-FAIL');
       setAmount(2500);
@@ -57,6 +60,7 @@ export const SubmitGrievance: React.FC<SubmitGrievanceProps> = ({ onNavigate, la
       setComplaint('Test trigger for runaway loop protection. Tool failure threshold simulation.');
       setDemoScenario('breaker_trip');
       setMaxFailures(2); // Strict failure threshold to force breaker halt
+      setMaxTokens(10000);
     }
   };
 
@@ -276,15 +280,15 @@ export const SubmitGrievance: React.FC<SubmitGrievanceProps> = ({ onNavigate, la
 
             <div>
               <label className="block text-[11px] font-mono text-gray-400 mb-1">
-                Max Token Budget (Ceiling)
+                Max Token Budget (10,000 Safety Budget)
               </label>
               <input
                 type="number"
                 value={maxTokens}
                 onChange={(e) => setMaxTokens(Number(e.target.value))}
                 min={1000}
-                max={100000}
-                step={5000}
+                max={20000}
+                step={1000}
                 className="w-full px-2.5 py-1.5 rounded bg-obsidian border border-panel-border text-xs font-mono text-white focus:outline-none focus:border-cyan"
               />
             </div>

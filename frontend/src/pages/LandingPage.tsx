@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowRight, ShieldCheck, Zap, GitFork, Scale, Activity, Cpu, CheckCircle2, Lock, FileSearch, ArrowUpRight } from 'lucide-react';
+import { ArrowRight, ShieldCheck, Zap, GitFork, Scale, Activity, Lock, CheckCircle2 } from 'lucide-react';
 import HeroDAG from '../components/landing/HeroDAG';
 import { Language, translations } from '../lib/translations';
 
@@ -11,40 +11,40 @@ interface LandingPageProps {
 export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate, lang }) => {
   const t = translations[lang] || translations.en;
 
-  const stats = [
-    { label: 'Autonomous Resolution Rate', value: '94.2%', sub: 'Sub-second Tri-party Settlement' },
-    { label: 'Average Dispute TAT', value: '1.4 sec', sub: 'vs RBI 24h - 30d manual mandate' },
-    { label: 'Token Safety Ceiling', value: '50k Tokens', sub: 'Hardware-enforced Circuit Breaker' },
-    { label: 'Multi-Ledger Coverage', value: '100%', sub: 'Sender CBS + NPCI + Beneficiary PG' },
+  const capabilityIndicators = [
+    { label: 'Token Safety Ceiling', value: '10K TOKENS', sub: 'Authoritative Safety Budget' },
+    { label: 'Circuit Breaker Guard', value: '4 FAILURES', sub: 'Deterministic Safe-Halt' },
+    { label: 'Telemetry Stream', value: 'REAL-TIME SSE', sub: 'Live Event Tracing' },
+    { label: 'Observability & Oversight', value: 'OPENTELEMETRY', sub: 'Human-in-the-Loop Review' },
   ];
 
   const features = [
     {
       icon: GitFork,
       title: 'Tri-Party Multi-Ledger Arbitration',
-      desc: 'Simultaneously queries Core Banking System (CBS), NPCI central switches, and Merchant Payment Gateways to pinpoint asymmetric packet drops (U69 timeouts).',
-      badge: 'Zero Hallucination',
+      desc: 'Simultaneously cross-checks Core Banking System (CBS), NPCI central switches, and Merchant Payment Gateways in a synthetic banking environment to pinpoint asymmetric packet drops (U69 timeouts).',
+      badge: 'Synthetic Sandbox',
       color: 'text-cyan',
     },
     {
       icon: Lock,
       title: 'Deterministic Action Allowlist',
-      desc: 'Strictly restricts agent execution to approved banking operations: EXECUTE_REVERSAL, NOTIFY_PARTIES, or HUMAN_ESCALATION. No arbitrary code execution.',
+      desc: 'Restricts agent recommendations to pre-approved banking actions: RECOMMEND_REVERSAL, REQUEST_EVIDENCE, or HUMAN_ESCALATION. Closed allowlist prevents unauthorized side-effects.',
       badge: 'Allowlist Guard',
       color: 'text-emerald',
     },
     {
       icon: Activity,
-      title: 'Runaway-Loop Circuit Breakers',
-      desc: 'Monitors tool failure spikes (max 3 consecutive), iteration limits, and token budgets. Instantly safely halts into Human-in-the-Loop on anomaly detection.',
-      badge: 'Fail-Safe Halted',
+      title: 'Runaway-Loop Circuit Breaker',
+      desc: 'Enforces hardware safety: halts execution on 4 consecutive tool failures, iteration caps (10), or token budget exhaustion (10,000 tokens). Safely degrades into human review.',
+      badge: 'Safety Enforcement',
       color: 'text-amber',
     },
     {
       icon: Scale,
-      title: 'Ombudsman HITL Governance Desk',
-      desc: 'High-value claims (> ₹50,000) or low-confidence determinations are automatically routed to the Ombudsman portal with complete cryptographic audit trails.',
-      badge: 'RBI ODR Compliant',
+      title: 'Human-in-the-Loop Governance',
+      desc: 'High-value claims (> ₹50,000), circuit breaker trips, or low-confidence determinations are routed to the human oversight queue with complete OpenTelemetry audit trails.',
+      badge: 'Decision-Support',
       color: 'text-magenta',
     },
   ];
@@ -59,12 +59,12 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate, lang }) =>
         {/* Top Badge */}
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan/10 border border-cyan/30 text-cyan text-xs font-mono mb-6 shadow-cyan-sm">
           <Zap className="w-3.5 h-3.5 animate-pulse" />
-          <span>AUTONOMOUS FINANCIAL ODR ENGINE &bull; CHALLENGE 1 PROTOTYPE</span>
+          <span>DECISION-SUPPORT PROTOTYPE &bull; SYNTHETIC BANKING SANDBOX</span>
         </div>
 
         {/* Hero Title */}
         <h1 className="text-4xl sm:text-6xl font-black tracking-tight text-white leading-tight">
-          Sub-Second Resolution for <br />
+          Explainable AI for <br />
           <span className="bg-gradient-to-r from-cyan via-blue-400 to-magenta bg-clip-text text-transparent">
             Failed Digital Payments
           </span>
@@ -72,7 +72,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate, lang }) =>
 
         {/* Hero Subtitle */}
         <p className="mt-6 text-base sm:text-lg text-gray-300 max-w-2xl mx-auto leading-relaxed">
-          Autonomous multi-agent grievance resolution platform under RBI Master Directions. Cross-checks Core Banking, NPCI, and Merchant ledgers with deterministic circuit breakers.
+          Prototype agentic decision-support system for complex financial grievances using synthetic banking data, OpenTelemetry observability, deterministic circuit breakers, and human oversight for consequential decisions.
         </p>
 
         {/* CTA Group */}
@@ -81,7 +81,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate, lang }) =>
             onClick={() => onNavigate('submit')}
             className="px-6 py-3 rounded-xl bg-gradient-to-r from-cyan to-blue-500 text-black font-semibold text-sm hover:opacity-95 transition-all shadow-cyan-md flex items-center gap-2"
           >
-            <span>File Grievance Now</span>
+            <span>Submit Demo Grievance</span>
             <ArrowRight className="w-4 h-4" />
           </button>
 
@@ -90,7 +90,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate, lang }) =>
             className="px-6 py-3 rounded-xl bg-panel hover:bg-panel-border border border-cyan/30 text-cyan font-mono text-sm transition-all flex items-center gap-2 shadow-cyan-sm"
           >
             <Activity className="w-4 h-4" />
-            <span>Launch Live Case Demo</span>
+            <span>Launch Live Investigation</span>
           </button>
 
           <button
@@ -98,17 +98,17 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate, lang }) =>
             className="px-5 py-3 rounded-xl bg-panel hover:bg-panel-border border border-panel-border text-gray-300 hover:text-white font-mono text-sm transition-all flex items-center gap-2"
           >
             <Scale className="w-4 h-4 text-magenta" />
-            <span>Ombudsman Desk</span>
+            <span>Human Review Desk</span>
           </button>
         </div>
       </section>
 
-      {/* Real-time Stats Grid */}
+      {/* Capability Indicators Grid (Factual Architecture, No Fabricated Benchmarks) */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-6 rounded-2xl bg-panel/60 border border-panel-border backdrop-blur-md">
-          {stats.map((stat, idx) => (
+          {capabilityIndicators.map((stat, idx) => (
             <div key={idx} className="space-y-1">
-              <span className="text-2xl sm:text-3xl font-black font-mono text-white tracking-tight">
+              <span className="text-xl sm:text-2xl font-black font-mono text-white tracking-tight">
                 {stat.value}
               </span>
               <p className="text-xs font-semibold text-gray-300">{stat.label}</p>
@@ -118,7 +118,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate, lang }) =>
         </div>
       </section>
 
-      {/* HeroDAG Interactive Pipeline Section */}
+      {/* HeroDAG Evidence & Reconciliation Flow */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <HeroDAG onExploreClick={() => onNavigate('case', 'CASE-2026-9041')} />
       </section>
@@ -130,10 +130,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate, lang }) =>
             DETERMINISTIC ARCHITECTURE
           </span>
           <h2 className="text-2xl sm:text-3xl font-bold text-white mt-1">
-            Engineered for Banking Rigor & Zero Hallucination
+            Engineered for Safety, Observability & Human Oversight
           </h2>
           <p className="text-sm text-gray-400 max-w-xl mx-auto mt-2">
-            Every step is governed by deterministic allowlists, state machines, and mathematical circuit breakers.
+            Every investigation step is constrained by deterministic allowlists, state machines, and mathematical circuit breakers.
           </p>
         </div>
 
@@ -170,14 +170,14 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate, lang }) =>
             <div className="flex items-center gap-2">
               <ShieldCheck className="w-5 h-5 text-emerald" />
               <span className="text-xs font-mono font-semibold uppercase tracking-wider text-emerald">
-                Reserve Bank of India (RBI) Compliant ODR
+                Policy-Informed Prototype &bull; Decision-Support
               </span>
             </div>
             <h3 className="text-xl font-bold text-white">
-              Instantaneous Auto-Reversal for Failed UPI & IMPS Transactions
+              Multi-Ledger Cross-Check for Stranded Digital Transactions
             </h3>
             <p className="text-xs text-gray-400">
-              When a customer's account is debited but the merchant does not receive credit within standard settlement intervals, FinResolve automatically initiates the statutory auto-reversal to the source account.
+              When a citizen's account is debited but the merchant ledger confirms non-receipt, FinResolve cross-references mock banking telemetries under simulated turnaround guidelines to prepare explainable recommendations for human review.
             </p>
           </div>
 
@@ -185,7 +185,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate, lang }) =>
             onClick={() => onNavigate('submit')}
             className="shrink-0 px-6 py-3 rounded-xl bg-cyan hover:bg-cyan/90 text-black font-semibold text-xs transition-all shadow-cyan-sm flex items-center gap-2"
           >
-            <span>Resolve a Failed Payment</span>
+            <span>Test a Scenario</span>
             <ArrowRight className="w-4 h-4" />
           </button>
         </div>

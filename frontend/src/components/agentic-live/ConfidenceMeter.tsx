@@ -1,9 +1,9 @@
 import React from 'react';
-import { ShieldCheck, AlertTriangle, Cpu, Gauge, Zap, CheckCircle2 } from 'lucide-react';
+import { AlertTriangle, Gauge } from 'lucide-react';
 import { formatINR, formatTokens } from '../../lib/utils';
 
 interface ConfidenceMeterProps {
-  confidence?: number; // 0.0 to 1.0 or 0 to 100
+  confidence?: number | null; // 0.0 to 1.0 or null/undefined
   amount?: number;
   tokenUsage?: number;
   maxTokens?: number;
@@ -13,29 +13,35 @@ interface ConfidenceMeterProps {
 }
 
 export const ConfidenceMeter: React.FC<ConfidenceMeterProps> = ({
-  confidence = 0.94,
+  confidence,
   amount = 1499,
   tokenUsage = 3420,
-  maxTokens = 50000,
+  maxTokens = 10000,
   consecutiveFailures = 0,
-  maxFailures = 3,
+  maxFailures = 4,
   circuitBreakerTripped = false,
 }) => {
-  // Normalize confidence to 0-100
-  const normalizedConfidence = confidence <= 1.0 ? Math.round(confidence * 100) : Math.min(100, Math.round(confidence));
+  const hasConfidence = confidence !== undefined && confidence !== null;
+  const normalizedConfidence = hasConfidence
+    ? confidence <= 1.0
+      ? Math.round(confidence * 100)
+      : Math.min(100, Math.round(confidence))
+    : null;
+
   const isHighValue = (amount || 0) > 50000;
-  const isLowConfidence = normalizedConfidence < 75;
-  const requiresHITL = isHighValue || isLowConfidence || circuitBreakerTripped;
+  const isLowConfidence = normalizedConfidence !== null && normalizedConfidence < 75;
+  const requiresHITL = isHighValue || isLowConfidence || circuitBreakerTripped || !hasConfidence;
 
   const getColor = () => {
     if (circuitBreakerTripped) return { text: 'text-terracotta', stroke: '#EF4444', bg: 'bg-terracotta/15', border: 'border-terracotta/40' };
-    if (normalizedConfidence >= 85) return { text: 'text-emerald', stroke: '#10B981', bg: 'bg-emerald/15', border: 'border-emerald/40' };
-    if (normalizedConfidence >= 75) return { text: 'text-amber', stroke: '#F59E0B', bg: 'bg-amber/15', border: 'border-amber/40' };
+    if (!hasConfidence) return { text: 'text-gray-400', stroke: '#6B7280', bg: 'bg-white/5', border: 'border-white/10' };
+    if (normalizedConfidence! >= 85) return { text: 'text-emerald', stroke: '#10B981', bg: 'bg-emerald/15', border: 'border-emerald/40' };
+    if (normalizedConfidence! >= 75) return { text: 'text-amber', stroke: '#F59E0B', bg: 'bg-amber/15', border: 'border-amber/40' };
     return { text: 'text-terracotta', stroke: '#EF4444', bg: 'bg-terracotta/15', border: 'border-terracotta/40' };
   };
 
   const colorConfig = getColor();
-  const tokenPercentage = Math.min(100, Math.round(((tokenUsage || 0) / (maxTokens || 50000)) * 100));
+  const tokenPercentage = Math.min(100, Math.round(((tokenUsage || 0) / (maxTokens || 10000)) * 100));
 
   return (
     <div className="rounded-2xl border border-panel-border bg-panel p-5 space-y-4">
@@ -48,7 +54,7 @@ export const ConfidenceMeter: React.FC<ConfidenceMeterProps> = ({
           </h4>
         </div>
         <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-white/5 text-gray-400">
-          RBI TAT v2.1
+          Decision Support
         </span>
       </div>
 
@@ -73,16 +79,33 @@ export const ConfidenceMeter: React.FC<ConfidenceMeterProps> = ({
               stroke={colorConfig.stroke}
               strokeWidth="8"
               strokeDasharray={2 * Math.PI * 40}
-              strokeDashoffset={(2 * Math.PI * 40) * (1 - normalizedConfidence / 100)}
+              strokeDashoffset={
+                hasConfidence
+                  ? (2 * Math.PI * 40) * (1 - normalizedConfidence! / 100)
+                  : 2 * Math.PI * 40
+              }
               strokeLinecap="round"
               className="transition-all duration-1000 ease-out"
             />
           </svg>
-          <div className="absolute flex flex-col items-center justify-center">
-            <span className={`text-2xl font-black font-mono tracking-tight ${colorConfig.text}`}>
-              {normalizedConfidence}%
-            </span>
-            <span className="text-[9px] font-mono text-gray-400 uppercase">Confidence</span>
+          <div className="absolute flex flex-col items-center justify-center text-center px-1">
+            {hasConfidence ? (
+              <>
+                <span className={`text-2xl font-black font-mono tracking-tight ${colorConfig.text}`}>
+                  {normalizedConfidence}%
+                </span>
+                <span className="text-[9px] font-mono text-gray-400 uppercase">Confidence</span>
+              </>
+            ) : (
+              <>
+                <span className="text-[10px] font-mono font-bold text-gray-400 uppercase leading-tight">
+                  CONFIDENCE
+                </span>
+                <span className="text-[9px] font-mono text-amber uppercase">
+                  UNAVAILABLE
+                </span>
+              </>
+            )}
           </div>
         </div>
 
@@ -91,19 +114,23 @@ export const ConfidenceMeter: React.FC<ConfidenceMeterProps> = ({
           <div className="flex items-center justify-between">
             <span className="text-gray-400">Resolution Category:</span>
             <span className="font-semibold text-white font-mono">
-              {normalizedConfidence >= 85 ? 'AUTONOMOUS CLEAR' : normalizedConfidence >= 75 ? 'REVIEW ADVISED' : 'MANUAL HITL'}
+              {!hasConfidence
+                ? 'HUMAN REVIEW REQUIRED'
+                : normalizedConfidence! >= 85
+                ? 'RECOMMENDED FOR ACTION'
+                : 'HUMAN REVIEW REQUIRED'}
             </span>
           </div>
           <div className="flex items-center justify-between">
             <span className="text-gray-400">Disputed Amount:</span>
             <span className={`font-semibold font-mono ${isHighValue ? 'text-amber' : 'text-white'}`}>
-              {formatINR(amount)} {isHighValue && '(> ₹50,000 Cap)'}
+              {formatINR(amount)} {isHighValue && '(> ₹50,000 Threshold)'}
             </span>
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-gray-400">Verification Source:</span>
+            <span className="text-gray-400">Evaluation Source:</span>
             <span className="text-gray-300 font-mono text-[11px]">
-              Tri-Party Consensus
+              Multi-Ledger Cross-Check
             </span>
           </div>
         </div>
@@ -115,14 +142,16 @@ export const ConfidenceMeter: React.FC<ConfidenceMeterProps> = ({
           <AlertTriangle className={`w-4 h-4 shrink-0 mt-0.5 ${colorConfig.text}`} />
           <div className="text-xs">
             <p className={`font-semibold ${colorConfig.text}`}>
-              MANDATORY HUMAN-IN-THE-LOOP (HITL) ESCALATION
+              HUMAN REVIEW REQUIRED
             </p>
             <p className="text-gray-300 text-[11px] mt-0.5">
               {circuitBreakerTripped
-                ? 'Deterministic circuit breaker tripped. Execution safely halted to prevent runaway loops.'
+                ? 'Deterministic circuit breaker halted agent execution to prevent runaway failures.'
+                : !hasConfidence
+                ? 'Model confidence score was not supplied by backend telemetry.'
                 : isHighValue
-                ? `Disputed amount (${formatINR(amount)}) exceeds the ₹50,000 autonomous payout threshold.`
-                : `Confidence level (${normalizedConfidence}%) is below the 75% autonomous threshold.`}
+                ? `Disputed amount (${formatINR(amount)}) exceeds the ₹50,000 human oversight threshold.`
+                : `Confidence level (${normalizedConfidence}%) is below the 75% threshold.`}
             </p>
           </div>
         </div>
@@ -130,12 +159,12 @@ export const ConfidenceMeter: React.FC<ConfidenceMeterProps> = ({
 
       {/* Safety & Token Budget Gauges */}
       <div className="space-y-3 pt-2">
-        {/* Token Budget Gauge */}
+        {/* Token Budget Gauge - 10,000 AUTHORITATIVE BUDGET */}
         <div className="space-y-1">
           <div className="flex items-center justify-between text-[11px] font-mono">
-            <span className="text-gray-400">Token Budget Cap (Safety Guardrail)</span>
+            <span className="text-gray-400">10,000 TOKEN SAFETY BUDGET</span>
             <span className="text-gray-300">
-              {formatTokens(tokenUsage)} / {formatTokens(maxTokens)} ({tokenPercentage}%)
+              {formatTokens(tokenUsage)} / {formatTokens(maxTokens || 10000)} ({tokenPercentage}%)
             </span>
           </div>
           <div className="w-full h-1.5 rounded-full bg-obsidian overflow-hidden border border-panel-border">
@@ -151,9 +180,9 @@ export const ConfidenceMeter: React.FC<ConfidenceMeterProps> = ({
         {/* Consecutive Failure Circuit Breaker Gauge */}
         <div className="space-y-1">
           <div className="flex items-center justify-between text-[11px] font-mono">
-            <span className="text-gray-400">Consecutive Tool Failures</span>
+            <span className="text-gray-400">4-FAILURE CIRCUIT BREAKER</span>
             <span className={consecutiveFailures > 0 ? 'text-amber font-semibold' : 'text-gray-300'}>
-              {consecutiveFailures} / {maxFailures} Allowed
+              {consecutiveFailures} / {maxFailures} Failed Calls
             </span>
           </div>
           <div className="flex gap-1.5">

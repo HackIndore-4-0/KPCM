@@ -58,11 +58,11 @@ export const Navbar: React.FC<NavbarProps> = ({
                 FinResolve
               </span>
               <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded-full bg-cyan/10 border border-cyan/30 text-cyan">
-                v1.0 Live
+                Decision Support
               </span>
             </div>
             <p className="text-[11px] text-gray-400 hidden sm:block">
-              {t.hero_subtitle.slice(0, 38)}...
+              Prototype Decision-Support Engine
             </p>
           </div>
         </div>
@@ -152,7 +152,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             onClick={() => setActiveTab('submit')}
             className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-gradient-to-r from-cyan to-blue-500 text-black hover:opacity-90 transition-opacity shadow-cyan-sm"
           >
-            <span>Resolve Now</span>
+            <span>Submit Grievance</span>
             <ArrowRight className="w-3.5 h-3.5" />
           </button>
         </div>

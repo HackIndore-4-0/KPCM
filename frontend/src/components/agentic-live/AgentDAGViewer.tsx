@@ -169,15 +169,15 @@ export const AgentDAGViewer: React.FC<AgentDAGViewerProps> = ({
     {
       id: 'execute',
       label: '7. Allowlist Executor',
-      sublabel: 'Instant Reversal / Payout',
+      sublabel: 'Allowlist Action Generation',
       icon: Zap,
       x: 100,
       y: 540,
     },
     {
       id: 'human_review',
-      label: '8. Ombudsman Review',
-      sublabel: 'HITL Escalation (>₹50k/Breaker)',
+      label: '8. Human Review',
+      sublabel: 'HITL Queue (Amount > ₹50k / Breaker)',
       icon: UserCheck,
       x: 400,
       y: 540,

@@ -65,18 +65,18 @@ export const OmbudsmanDashboard: React.FC<OmbudsmanDashboardProps> = ({ onNaviga
   });
 
   const handleEscalationAction = (
-    action: 'APPROVE' | 'OVERRIDE' | 'ESCALATE',
+    action: 'APPROVE_RECOMMENDATION' | 'MODIFY_RESOLUTION' | 'ESCALATE_HUMAN_REVIEW',
     item: EscalationItem
   ) => {
     setEscalations((prev) =>
       prev.map((esc) => {
         if (esc.id === item.id) {
-          const newStatus =
-            action === 'APPROVE'
-              ? 'APPROVED'
-              : action === 'OVERRIDE'
-              ? 'OVERRIDDEN'
-              : 'ESCALATED_RBI';
+          const newStatus: EscalationItem['status'] =
+            action === 'APPROVE_RECOMMENDATION'
+              ? 'APPROVED_RECOMMENDATION'
+              : action === 'MODIFY_RESOLUTION'
+              ? 'MODIFIED_RESOLUTION'
+              : 'ESCALATED_HUMAN_REVIEW';
           return { ...esc, status: newStatus };
         }
         return esc;
@@ -94,45 +94,45 @@ export const OmbudsmanDashboard: React.FC<OmbudsmanDashboardProps> = ({ onNaviga
           <div className="flex items-center gap-2">
             <Scale className="w-5 h-5 text-magenta" />
             <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
-              Banking Ombudsman & HITL Governance Center
+              Human-in-the-Loop Oversight Desk
             </h2>
           </div>
           <p className="text-xs sm:text-sm text-gray-400 mt-1">
-            Human-in-the-Loop oversight desk for high-value claims (&gt; ₹50,000), circuit breaker trips, and ambiguous discrepancies.
+            Decision-support review console for high-value claims (&gt; ₹50,000), circuit breaker trips, and ambiguous discrepancies. Synthetic demo environment.
           </p>
         </div>
 
         <div className="flex items-center gap-2 text-xs font-mono">
           <span className="px-3 py-1.5 rounded-lg bg-magenta/15 text-magenta border border-magenta/30 font-semibold">
-            {pendingCount} Pending Human Decisions
+            {pendingCount} Pending Human Reviews
           </span>
         </div>
       </div>
 
-      {/* KPI Overview Metrics */}
+      {/* Capability & Architecture Indicators */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="p-4 rounded-xl bg-panel border border-panel-border space-y-1">
-          <span className="text-[11px] font-mono text-gray-400">Total Escalations</span>
-          <div className="text-2xl font-bold font-mono text-white">{escalations.length}</div>
-          <p className="text-[10px] text-gray-500">Autonomous to HITL handoffs</p>
+          <span className="text-[11px] font-mono text-gray-400">Token Budget Cap</span>
+          <div className="text-xl font-bold font-mono text-cyan">10K TOKENS</div>
+          <p className="text-[10px] text-gray-500">Authoritative safety ceiling</p>
         </div>
 
         <div className="p-4 rounded-xl bg-panel border border-panel-border space-y-1">
-          <span className="text-[11px] font-mono text-gray-400">Autonomous Pass Rate</span>
-          <div className="text-2xl font-bold font-mono text-emerald">94.2%</div>
-          <p className="text-[10px] text-gray-500">Sub-second auto-resolved</p>
+          <span className="text-[11px] font-mono text-gray-400">Circuit Breaker Policy</span>
+          <div className="text-xl font-bold font-mono text-amber">4 FAILURES</div>
+          <p className="text-[10px] text-gray-500">Runaway loop safe-halt</p>
         </div>
 
         <div className="p-4 rounded-xl bg-panel border border-panel-border space-y-1">
-          <span className="text-[11px] font-mono text-gray-400">Circuit Breakers Tripped</span>
-          <div className="text-2xl font-bold font-mono text-amber">1 Halted</div>
-          <p className="text-[10px] text-gray-500">Runaway loops prevented</p>
+          <span className="text-[11px] font-mono text-gray-400">Telemetry Channel</span>
+          <div className="text-xl font-bold font-mono text-emerald">REAL-TIME SSE</div>
+          <p className="text-[10px] text-gray-500">OpenTelemetry trace stream</p>
         </div>
 
         <div className="p-4 rounded-xl bg-panel border border-panel-border space-y-1">
-          <span className="text-[11px] font-mono text-gray-400">Audit Compliance</span>
-          <div className="text-2xl font-bold font-mono text-cyan">100%</div>
-          <p className="text-[10px] text-gray-500">Supabase Immutable Log</p>
+          <span className="text-[11px] font-mono text-gray-400">Oversight Governance</span>
+          <div className="text-xl font-bold font-mono text-magenta">HITL QUEUE</div>
+          <p className="text-[10px] text-gray-500">Consequential decision review</p>
         </div>
       </div>
 
@@ -232,10 +232,10 @@ export const OmbudsmanDashboard: React.FC<OmbudsmanDashboardProps> = ({ onNaviga
                 <td className="py-2.5 px-3">{formatINR(72000)}</td>
                 <td className="py-2.5 px-3">
                   <span className="px-2 py-0.5 rounded-full text-[10px] bg-emerald/15 text-emerald border border-emerald/30">
-                    APPROVED_REVERSAL
+                    APPROVED_RECOMMENDATION
                   </span>
                 </td>
-                <td className="py-2.5 px-3 text-gray-400">OMBUDSMAN-IN-04</td>
+                <td className="py-2.5 px-3 text-gray-400">REVIEWER-04</td>
                 <td className="py-2.5 px-3 text-gray-400">2026-09-27</td>
               </tr>
               <tr>
@@ -243,11 +243,11 @@ export const OmbudsmanDashboard: React.FC<OmbudsmanDashboardProps> = ({ onNaviga
                 <td className="py-2.5 px-3 font-sans">Vikram Seth</td>
                 <td className="py-2.5 px-3">{formatINR(3100)}</td>
                 <td className="py-2.5 px-3">
-                  <span className="px-2 py-0.5 rounded-full text-[10px] bg-terracotta/15 text-terracotta border border-terracotta/30">
-                    CLAIM_DISMISSED_CCD_PROOF
+                  <span className="px-2 py-0.5 rounded-full text-[10px] bg-amber/15 text-amber border border-amber/30">
+                    MODIFIED_RESOLUTION
                   </span>
                 </td>
-                <td className="py-2.5 px-3 text-gray-400">OMBUDSMAN-IN-02</td>
+                <td className="py-2.5 px-3 text-gray-400">REVIEWER-02</td>
                 <td className="py-2.5 px-3 text-gray-400">2026-09-26</td>
               </tr>
             </tbody>

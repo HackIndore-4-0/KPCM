@@ -55,14 +55,14 @@ export const HeroDAG: React.FC<HeroDAGProps> = ({ onExploreClick }) => {
     },
     {
       id: 'arbiter',
-      title: 'Conflict Arbiter',
+      title: 'Conflict Detection',
       subtitle: 'Deterministic Action Allowlist',
       icon: GitMerge,
       color: 'text-cyan',
       border: 'border-cyan/60',
       bg: 'bg-cyan/15',
       glow: 'shadow-cyan-md',
-      detail: 'Tri-party mismatch verified. Autonomous INSTANT_REVERSAL authorized in 1.2s',
+      detail: 'Tri-party mismatch verified. Evidence compiled for decision-support resolution.',
     },
   ];
 
@@ -84,13 +84,13 @@ export const HeroDAG: React.FC<HeroDAGProps> = ({ onExploreClick }) => {
           <div className="w-3 h-3 rounded-full bg-cyan animate-pulse" />
           <div>
             <h3 className="text-white font-mono font-semibold text-sm tracking-wide flex items-center gap-2">
-              AUTONOMOUS TRI-PARTY RECONCILIATION DAG
+              EVIDENCE & RECONCILIATION SOURCE FLOW
               <span className="text-[10px] text-cyan px-2 py-0.5 rounded-full bg-cyan/10 border border-cyan/30">
-                LIVE SIMULATION
+                SYNTHETIC SANDBOX
               </span>
             </h3>
             <p className="text-gray-400 text-xs mt-0.5">
-              Deterministic state traversal across simulated financial institutions
+              Citizen Intake &rarr; Bank CBS &rarr; NPCI Switch &rarr; Merchant PG &rarr; Conflict Detection
             </p>
           </div>
         </div>
@@ -193,7 +193,7 @@ export const HeroDAG: React.FC<HeroDAGProps> = ({ onExploreClick }) => {
       <div className="mt-6 pt-4 border-t border-panel-border/60 flex flex-wrap items-center justify-between gap-4 text-xs font-mono text-gray-400 relative z-10">
         <div className="flex items-center gap-2">
           <Shield className="w-4 h-4 text-emerald" />
-          <span>RBI Master Direction Compliant (TAT &le; 24h)</span>
+          <span>Policy-Informed Prototype (Synthetic Banking Data)</span>
         </div>
         <div className="flex items-center gap-2">
           <CheckCircle className="w-4 h-4 text-cyan" />
@@ -201,7 +201,7 @@ export const HeroDAG: React.FC<HeroDAGProps> = ({ onExploreClick }) => {
         </div>
         <div className="flex items-center gap-2">
           <AlertTriangle className="w-4 h-4 text-amber" />
-          <span>Deterministic Circuit Breakers (Budget &lt; 50k tokens)</span>
+          <span>10,000 Token Safety Budget (4-Failure Circuit Breaker)</span>
         </div>
       </div>
     </div>

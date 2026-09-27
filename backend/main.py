@@ -1,3 +1,4 @@
+import os
 import asyncio
 import json
 from typing import Optional, List
@@ -171,11 +172,18 @@ app = FastAPI(
     description="FinResolve Agentic Decision-Support & Execution Safety Engine",
 )
 
+raw_origins = os.getenv(
+    "ALLOWED_ORIGINS",
+    "http://localhost:5173,http://localhost:3000,http://127.0.0.1:5173,http://127.0.0.1:3000"
+)
+allowed_origins = [o.strip() for o in raw_origins.split(",") if o.strip()]
+has_wildcard = "*" in allowed_origins
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
+    allow_origins=allowed_origins,
+    allow_credentials=not has_wildcard,
+    allow_methods=["GET", "POST", "OPTIONS"],
     allow_headers=["*"],
 )
 

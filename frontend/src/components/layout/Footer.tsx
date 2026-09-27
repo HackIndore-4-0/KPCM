@@ -19,16 +19,16 @@ export const Footer: React.FC<FooterProps> = ({ lang }) => {
               <Cpu className="w-5 h-5 text-cyan" />
               <span className="font-bold text-white tracking-wide text-sm">FinResolve AI</span>
               <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-cyan/10 border border-cyan/30 text-cyan">
-                Autonomous ODR
+                Decision Support Prototype
               </span>
             </div>
             <p className="text-gray-400 text-xs leading-relaxed max-w-lg">
-              Next-generation Autonomous Financial Grievance Redressal platform. Powered by LangGraph multi-agent reconciliation, deterministic circuit breakers, and sub-second multi-ledger arbitration across Bank CBS, NPCI switches, and Merchant gateways.
+              FinResolve is a prototype agentic decision-support system for complex financial grievances using synthetic banking data and human oversight for consequential decisions.
             </p>
             <div className="p-2.5 rounded-lg bg-panel border border-panel-border text-[11px] text-gray-300 flex items-start gap-2">
               <ShieldAlert className="w-4 h-4 text-amber shrink-0 mt-0.5" />
               <span>
-                <strong>Regulatory Alignment:</strong> Architected under RBI Master Direction on Harmonisation of Turn Around Time (TAT) and customer compensation for failed digital transactions.
+                <strong>Policy-Informed Prototype:</strong> References principles from RBI Master Directions for contextual dispute reconciliation. Not an official regulatory authority, banking switch, or legal adjudicator.
               </span>
             </div>
           </div>
@@ -41,23 +41,23 @@ export const Footer: React.FC<FooterProps> = ({ lang }) => {
             <ul className="space-y-2 text-xs font-mono">
               <li className="flex items-center gap-1.5 text-gray-300">
                 <span className="w-1.5 h-1.5 rounded-full bg-cyan"></span>
-                <span>React 18 / Tailwind / XYFlow</span>
+                <span>OpenTelemetry = Observability</span>
               </li>
               <li className="flex items-center gap-1.5 text-gray-300">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald"></span>
-                <span>FastAPI Gateway / SSE Stream</span>
+                <span>CircuitBreaker = Safety Enforcement</span>
               </li>
               <li className="flex items-center gap-1.5 text-gray-300">
                 <span className="w-1.5 h-1.5 rounded-full bg-magenta"></span>
-                <span>LangGraph Reconcile Engine</span>
+                <span>LangGraph = Workflow Orchestration</span>
               </li>
               <li className="flex items-center gap-1.5 text-gray-300">
                 <span className="w-1.5 h-1.5 rounded-full bg-amber"></span>
-                <span>Circuit Breaker Guardrail</span>
+                <span>Supabase = State Persistence</span>
               </li>
               <li className="flex items-center gap-1.5 text-gray-300">
                 <span className="w-1.5 h-1.5 rounded-full bg-blue-400"></span>
-                <span>Supabase Audit Persistence</span>
+                <span>React 18 = Human-in-the-Loop UI</span>
               </li>
             </ul>
           </div>
@@ -69,10 +69,10 @@ export const Footer: React.FC<FooterProps> = ({ lang }) => {
             </h4>
             <div className="text-[11px] text-gray-400 space-y-2">
               <p>
-                <strong>Synthetic Sandbox:</strong> All transaction hashes, RRNs, account numbers, and CBS logs are synthetically generated mock fixtures.
+                <strong>Synthetic Sandbox:</strong> All transaction hashes, RRNs, account numbers, and CBS logs are synthetically generated mock fixtures. Zero real customer PII is processed.
               </p>
               <p>
-                <strong>Deterministic Limits:</strong> Max 3 consecutive tool failures, 50,000 token ceiling, and mandatory Ombudsman review for amounts &gt; ₹50,000.
+                <strong>Deterministic Limits:</strong> Max 4 consecutive tool failures, 10,000 token safety budget, and human review required for claimed amounts &gt; ₹50,000.
               </p>
             </div>
           </div>

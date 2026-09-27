@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Scale, AlertTriangle, ShieldCheck, CheckCircle2, XCircle, ArrowRight, UserCheck, Clock, FileText } from 'lucide-react';
+import { Scale, AlertTriangle, ShieldCheck, CheckCircle2, Edit3, ArrowRight, UserCheck } from 'lucide-react';
 import { formatINR } from '../../lib/utils';
 
 export interface EscalationItem {
@@ -13,27 +13,25 @@ export interface EscalationItem {
   agentRecommendation: string;
   confidence: number;
   tokenUsage: number;
-  status: 'PENDING_REVIEW' | 'APPROVED' | 'OVERRIDDEN' | 'ESCALATED_RBI';
+  status: 'PENDING_REVIEW' | 'APPROVED_RECOMMENDATION' | 'MODIFIED_RESOLUTION' | 'ESCALATED_HUMAN_REVIEW';
 }
 
 interface EscalationCardProps {
   item: EscalationItem;
-  onAction?: (action: 'APPROVE' | 'OVERRIDE' | 'ESCALATE', item: EscalationItem) => void;
+  onAction?: (action: 'APPROVE_RECOMMENDATION' | 'MODIFY_RESOLUTION' | 'ESCALATE_HUMAN_REVIEW', item: EscalationItem) => void;
 }
 
 export const EscalationCard: React.FC<EscalationCardProps> = ({ item, onAction }) => {
   const [currentStatus, setCurrentStatus] = useState<string>(item.status);
   const [isProcessing, setIsProcessing] = useState(false);
 
-  const handleAction = (action: 'APPROVE' | 'OVERRIDE' | 'ESCALATE') => {
+  const handleAction = (action: 'APPROVE_RECOMMENDATION' | 'MODIFY_RESOLUTION' | 'ESCALATE_HUMAN_REVIEW') => {
     setIsProcessing(true);
     setTimeout(() => {
-      if (action === 'APPROVE') setCurrentStatus('APPROVED');
-      if (action === 'OVERRIDE') setCurrentStatus('OVERRIDDEN');
-      if (action === 'ESCALATE') setCurrentStatus('ESCALATED_RBI');
+      setCurrentStatus(action);
       setIsProcessing(false);
       onAction?.(action, item);
-    }, 400);
+    }, 300);
   };
 
   const getReasonBadge = (reason: string) => {
@@ -47,7 +45,7 @@ export const EscalationCard: React.FC<EscalationCardProps> = ({ item, onAction }
       case 'CIRCUIT_BREAKER_TRIP':
         return (
           <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-terracotta/20 text-terracotta border border-terracotta/40 font-bold">
-            CIRCUIT BREAKER HALT
+            CIRCUIT BREAKER HALTED
           </span>
         );
       case 'LOW_CONFIDENCE':
@@ -88,7 +86,7 @@ export const EscalationCard: React.FC<EscalationCardProps> = ({ item, onAction }
         <div className="flex items-start gap-2">
           <AlertTriangle className="w-4 h-4 text-amber shrink-0 mt-0.5" />
           <div>
-            <span className="font-semibold text-gray-200">Escalation Trigger: </span>
+            <span className="font-semibold text-gray-200">Human Review Trigger: </span>
             <span className="text-gray-400 font-sans">{item.reasonText}</span>
           </div>
         </div>
@@ -96,7 +94,7 @@ export const EscalationCard: React.FC<EscalationCardProps> = ({ item, onAction }
         <div className="flex items-start gap-2">
           <ShieldCheck className="w-4 h-4 text-cyan shrink-0 mt-0.5" />
           <div>
-            <span className="font-semibold text-gray-200">Agent Proposed Action: </span>
+            <span className="font-semibold text-gray-200">Agent Recommendation: </span>
             <span className="text-cyan font-mono text-[11px]">{item.agentRecommendation}</span>
           </div>
         </div>
@@ -111,52 +109,56 @@ export const EscalationCard: React.FC<EscalationCardProps> = ({ item, onAction }
         </div>
       </div>
 
-      {/* Decision Actions Bar */}
+      {/* Human Review Actions Bar */}
       <div className="pt-3 border-t border-panel-border flex flex-wrap items-center justify-between gap-3">
         {currentStatus === 'PENDING_REVIEW' ? (
           <>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
+              {/* Action 1: Approve Agent Recommendation */}
               <button
                 disabled={isProcessing}
-                onClick={() => handleAction('APPROVE')}
+                onClick={() => handleAction('APPROVE_RECOMMENDATION')}
                 className="px-3 py-1.5 rounded-lg bg-emerald/20 hover:bg-emerald/30 border border-emerald/50 text-emerald text-xs font-semibold flex items-center gap-1.5 transition-colors disabled:opacity-50"
               >
                 <CheckCircle2 className="w-3.5 h-3.5" />
-                <span>Authorize Payout</span>
+                <span>Approve Agent Recommendation</span>
               </button>
 
+              {/* Action 2: Modify Resolution */}
               <button
                 disabled={isProcessing}
-                onClick={() => handleAction('OVERRIDE')}
-                className="px-3 py-1.5 rounded-lg bg-terracotta/20 hover:bg-terracotta/30 border border-terracotta/50 text-terracotta text-xs font-semibold flex items-center gap-1.5 transition-colors disabled:opacity-50"
+                onClick={() => handleAction('MODIFY_RESOLUTION')}
+                className="px-3 py-1.5 rounded-lg bg-amber/20 hover:bg-amber/30 border border-amber/50 text-amber text-xs font-semibold flex items-center gap-1.5 transition-colors disabled:opacity-50"
               >
-                <XCircle className="w-3.5 h-3.5" />
-                <span>Dismiss Claim</span>
+                <Edit3 className="w-3.5 h-3.5" />
+                <span>Modify Resolution</span>
               </button>
             </div>
 
+            {/* Action 3: Escalate for Human Review */}
             <button
               disabled={isProcessing}
-              onClick={() => handleAction('ESCALATE')}
+              onClick={() => handleAction('ESCALATE_HUMAN_REVIEW')}
               className="px-3 py-1.5 rounded-lg bg-panel hover:bg-panel-border border border-panel-border text-gray-300 text-xs font-medium flex items-center gap-1.5 transition-colors disabled:opacity-50"
             >
-              <span>Forward to RBI CMS</span>
+              <UserCheck className="w-3.5 h-3.5 text-magenta" />
+              <span>Escalate for Human Review</span>
               <ArrowRight className="w-3 h-3 text-magenta" />
             </button>
           </>
         ) : (
           <div className="w-full flex items-center justify-between p-2 rounded-lg bg-obsidian border border-panel-border text-xs font-mono">
-            <span className="text-gray-400">Ombudsman Determination:</span>
+            <span className="text-gray-400">Human Review Workflow State:</span>
             <span
               className={`font-semibold uppercase ${
-                currentStatus === 'APPROVED'
+                currentStatus === 'APPROVE_RECOMMENDATION'
                   ? 'text-emerald'
-                  : currentStatus === 'OVERRIDDEN'
-                  ? 'text-terracotta'
+                  : currentStatus === 'MODIFY_RESOLUTION'
+                  ? 'text-amber'
                   : 'text-magenta'
               }`}
             >
-              {currentStatus} (Recorded to Supabase Audit Ledger)
+              {currentStatus.replace(/_/g, ' ')} (Demo Workflow State)
             </span>
           </div>
         )}
