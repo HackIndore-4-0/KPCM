@@ -41,3 +41,21 @@ def test_token_budget_demo_trips():
     run = response.json()
     assert run["halt_event"]["trigger"] == "TOKEN_BUDGET"
     assert run["halt_event"]["total_tokens"] == 10500
+
+
+def test_cors_headers_configured():
+    response = client.options("/health", headers={
+        "Origin": "http://localhost:5173",
+        "Access-Control-Request-Method": "GET"
+    })
+    assert response.status_code == 200
+    assert response.headers.get("access-control-allow-origin") == "http://localhost:5173"
+
+
+def test_agent_run_sse_stream():
+    client.post("/agent/run/case-stream-test", json={"complaint": "UPI timeout debit dispute."})
+    response = client.get("/agent/run/case-stream-test/stream")
+    assert response.status_code == 200
+    assert "text/event-stream" in response.headers.get("content-type")
+    assert "event: trace" in response.text
+    assert "case-stream-test" in response.text

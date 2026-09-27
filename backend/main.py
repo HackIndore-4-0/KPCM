@@ -1,9 +1,12 @@
+import asyncio
+import json
 from typing import Optional, List
 from uuid import uuid4
 from datetime import datetime, timezone
 
 from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import HTMLResponse
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import HTMLResponse, StreamingResponse
 from pydantic import BaseModel, Field
 
 from core.config import settings
@@ -168,6 +171,14 @@ app = FastAPI(
     description="FinResolve Agentic Decision-Support & Execution Safety Engine",
 )
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 
 @app.get("/health")
 def health_check():
@@ -217,6 +228,53 @@ def get_run_timeline(run_id: str):
         "tool_failure_threshold": run["tool_failure_threshold"],
         "halt_event": run["halt_event"],
     }
+
+
+@app.get("/agent/run/{case_id}/stream")
+@app.get("/api/v1/stream/{case_id}")
+async def stream_agent_execution(case_id: str, request: Request):
+    """Stream live agent execution events over SSE (text/event-stream) for CaseDetail."""
+    run = _runs.get(case_id)
+    if not run:
+        # Automatically execute standard grievance workflow if run not yet cached
+        req = AgentRunRequest(complaint="Transaction debited but merchant claims payment pending. UTR 9876543210")
+        run = _run_demo(case_id, str(uuid4()), req)
+        _runs[case_id] = run
+
+    async def event_generator():
+        timeline = run.get("timeline", [])
+        for item in timeline:
+            if await request.is_disconnected():
+                break
+            payload = {
+                "node": item.get("node", "workflow"),
+                "action": "HALTED" if item.get("status") == "TRIPPED" else "EXECUTED",
+                "status": item.get("status"),
+                "msg": f"{item.get('name')}: {item.get('status')} {item.get('reason') or item.get('error') or ''}".strip(),
+                "details": item,
+                "case_id": case_id,
+                "run_id": run.get("run_id"),
+                "breaker_status": run.get("breaker_status"),
+                "token_usage": run.get("token_usage"),
+                "iteration": run.get("iteration"),
+            }
+            yield f"event: trace\ndata: {json.dumps(payload)}\n\n"
+            await asyncio.sleep(0.25)
+
+        # Emit completion trace event
+        final_payload = {
+            "node": "system",
+            "action": "COMPLETE",
+            "status": run.get("status"),
+            "msg": f"Workflow run finished with status: {run.get('status')}",
+            "breaker_status": run.get("breaker_status"),
+            "halt_event": run.get("halt_event"),
+            "case_id": case_id,
+            "run_id": run.get("run_id"),
+        }
+        yield f"event: trace\ndata: {json.dumps(final_payload)}\n\n"
+
+    return StreamingResponse(event_generator(), media_type="text/event-stream")
 
 
 @app.get("/dashboard", response_class=HTMLResponse)
