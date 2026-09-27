@@ -35,12 +35,14 @@ def build_workflow(
             set_execution_context(state["case_id"], state["run_id"], node_name, iteration=iteration)
             workflow_iterations_counter.add(1, {"node": node_name})
             if decision.action == "HALT":
-                return {"node": node_name, "iteration": iteration, "halt": decision.to_dict()}
+                return {"node": node_name, "iteration": iteration, "halt": decision.to_dict(),
+                        "history": list(state.get("history", [])) + [{"node": node_name, "status": "HALTED", "iteration": iteration}]}
             handler = handlers.get(node_name)
             try:
                 update = handler(state) if handler else {}
             except ExecutionHalted as exc:
-                return {"node": node_name, "iteration": iteration, "halt": exc.decision.to_dict()}
+                return {"node": node_name, "iteration": iteration, "halt": exc.decision.to_dict(),
+                        "history": list(state.get("history", [])) + [{"node": node_name, "status": "HALTED", "iteration": iteration}]}
             except Exception as exc:
                 # Node failures degrade to human review; they never escape the graph boundary.
                 failed = breaker.evaluate(node_name)
@@ -52,8 +54,10 @@ def build_workflow(
                         reason=f"Workflow node failed ({type(exc).__name__}); execution was stopped for human review.",
                         timestamp=datetime.now(timezone.utc).isoformat(),
                     )
-                return {"node": node_name, "iteration": iteration, "halt": failed.to_dict(), "error_type": type(exc).__name__}
-            return {**(update or {}), "node": node_name, "iteration": iteration}
+                return {"node": node_name, "iteration": iteration, "halt": failed.to_dict(), "error_type": type(exc).__name__,
+                        "history": list(state.get("history", [])) + [{"node": node_name, "status": "ERROR", "iteration": iteration}]}
+            history = list(state.get("history", [])) + [{"node": node_name, "status": "SUCCESS", "iteration": iteration}]
+            return {**(update or {}), "node": node_name, "iteration": iteration, "history": history}
 
         graph.add_node(name, execute_node)
 
@@ -90,6 +94,7 @@ def run_agent_workflow(
     breaker = breaker or CircuitBreaker()
     initial: AgentRunState = {"case_id": case_id, "run_id": run_id, "status": "running", "history": []}
     token = bind_circuit_breaker(breaker)
+    set_execution_context(case_id, run_id, node="agent_root", iteration=0)
     tracer = get_tracer()
     root = tracer.start_span("agent_run", attributes=get_standard_attributes(
         node="agent_root", iteration=0, status="RUNNING", additional={"case_id": case_id, "run_id": run_id}
