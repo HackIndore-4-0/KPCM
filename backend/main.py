@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.api.v1 import disputes, stream, ombudsman, mocks
+from app.api.v1 import disputes, stream, ombudsman, mocks, telemetry
 
 app = FastAPI(
     title="FinResolve Agentic Engine API",
@@ -21,6 +21,7 @@ app.include_router(disputes.router, prefix="/api/v1/disputes", tags=["Disputes"]
 app.include_router(stream.router, prefix="/api/v1/stream", tags=["Streaming Traces"])
 app.include_router(ombudsman.router, prefix="/api/v1/ombudsman", tags=["Ombudsman HITL"])
 app.include_router(mocks.router, prefix="/api/v1/mocks", tags=["Simulated Ecosystem"])
+app.include_router(telemetry.router, prefix="/api/v1/telemetry", tags=["Telemetry & Observability"])
 
 @app.get("/health")
 def health():

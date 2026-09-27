@@ -23,4 +23,4 @@ npm run dev
 ```
 
 ### 3. Supabase Setup
-Run the SQL migration in `supabase/migrations/20260924_init.sql` and insert mock disputes from `supabase/seed.sql`.
+Run the SQL migration in `supabase/migrations/20260927_init.sql` and insert mock disputes from `supabase/seed.sql`.

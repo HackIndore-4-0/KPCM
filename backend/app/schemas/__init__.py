@@ -1,0 +1,20 @@
+# Expose schemas from backend/schemas.py
+from schemas import (
+    SCHEMA_SQL,
+    DisputeStatus,
+    InstitutionType,
+    TransactionStatus,
+    EscalationVerdict,
+    DisputeCreateRequest,
+    DisputeResponse,
+    EvidenceRecord,
+    AgentTraceCreate,
+    AgentTraceRecord,
+    LedgerRecord,
+    HumanEscalationCreate,
+    HumanEscalationRecord,
+    EscalationDecisionRequest,
+    get_schema_sql,
+    export_sql_file,
+    apply_schema_to_supabase,
+)
