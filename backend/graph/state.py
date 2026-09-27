@@ -70,3 +70,4 @@ class AgentRunState(TypedDict, total=False):
     result: dict[str, Any]
     needs_human_review: bool
     error_type: str
+    force_loop_until_limit: bool

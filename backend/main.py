@@ -11,7 +11,9 @@ from core.telemetry import get_current_context, get_in_memory_spans
 from graph.workflow import AGENT_NODES, run_agent_workflow
 from llm.client import llm_call
 from mocks.merchant_pg import query_merchant_pg
-from safety.circuit_breaker import CircuitBreaker
+from mocks.bank_cbs import query_bank_cbs
+from mocks.npci_switch import query_npci_switch
+from safety.circuit_breaker import CircuitBreaker, ExecutionHalted
 
 _runs: dict[str, dict] = {}
 
@@ -32,11 +34,47 @@ def _run_demo(case_id: str, run_id: str, request: AgentRunRequest) -> dict:
     )
     handlers = {}
     tool_events: List[dict] = []
+    loop_until_limit = False
+
+    if request.demo_scenario is None:
+        # Deterministic local demo path exercises the same central LLM/tool wrappers.
+        def llm_node(node: str, usage: dict):
+            def invoke(state):
+                llm_call(
+                    prompt=f"{node} structured analysis for submitted grievance: {request.complaint}",
+                    node=node,
+                    simulated_tokens=usage,
+                    mock_content=f"{node} completed using bounded demo input.",
+                )
+                return {}
+            return invoke
+
+        def query_demo_ledgers(state):
+            query_bank_cbs(state["case_id"])
+            query_npci_switch(state["case_id"])
+            query_merchant_pg(state["case_id"])
+            return {}
+
+        handlers.update({
+            "triage": llm_node("triage", {"input_tokens": 120, "output_tokens": 40, "total_tokens": 160}),
+            "skeptic": llm_node("skeptic", {"input_tokens": 90, "output_tokens": 30, "total_tokens": 120}),
+            "planner": llm_node("planner", {"input_tokens": 150, "output_tokens": 50, "total_tokens": 200}),
+            "execute": query_demo_ledgers,
+        })
 
     if request.demo_scenario == "consecutive_tool_failures":
         def fail_tools(state):
             for attempt in range(10):
-                res = query_merchant_pg(f"demo-{attempt}", force_fail=True, node="merchant_verification")
+                try:
+                    res = query_merchant_pg(f"demo-{attempt}", force_fail=True, node="merchant_verification")
+                except ExecutionHalted:
+                    tool_events.append({
+                        "node": "merchant_verification",
+                        "step": f"Merchant PG (Attempt {attempt+1})",
+                        "status": "FAILURE",
+                        "error": "Tool call failed (ConnectionResetError).",
+                    })
+                    raise
                 tool_events.append({
                     "node": "merchant_verification",
                     "step": f"Merchant PG (Attempt {attempt+1})",
@@ -55,10 +93,10 @@ def _run_demo(case_id: str, run_id: str, request: AgentRunRequest) -> dict:
         handlers["planner"] = exceed_tokens
 
     elif request.demo_scenario == "max_iterations":
-        # Force breaker iteration to hit threshold
-        breaker.iteration = (request.max_iterations or breaker.max_iterations)
+        loop_until_limit = True
 
-    result = run_agent_workflow(case_id, run_id=run_id, handlers=handlers, breaker=breaker)
+    result = run_agent_workflow(case_id, run_id=run_id, handlers=handlers, breaker=breaker,
+                                loop_until_limit=loop_until_limit)
     halt = result.get("halt")
 
     # Build detailed visual timeline
@@ -112,7 +150,7 @@ def _run_demo(case_id: str, run_id: str, request: AgentRunRequest) -> dict:
             "threshold": halt.get("threshold"),
             "observed": halt.get("observed"),
             "node": halt.get("node"),
-            "tool": breaker.last_tool or "merchant_api",
+            "tool": breaker.last_tool or None,
             "iteration": halt.get("iteration"),
             "total_tokens": halt.get("total_tokens"),
             "reason": halt.get("reason"),

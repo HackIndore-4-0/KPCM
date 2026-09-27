@@ -2,9 +2,15 @@
 from contextvars import ContextVar, Token
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
+from enum import Enum
 from typing import Literal, Optional
 
 from core.config import settings
+
+
+class BreakerAction(str, Enum):
+    ALLOW = "ALLOW"
+    HALT = "HALT"
 
 
 @dataclass(frozen=True)
@@ -42,6 +48,10 @@ class CircuitBreaker:
         self.last_node = ""
         self.last_tool = ""
         self._halt: Optional[BreakerDecision] = None
+
+    @property
+    def is_tripped(self) -> bool:
+        return self._halt is not None
 
     def begin_iteration(self, node: str) -> BreakerDecision:
         self.iteration += 1

@@ -9,7 +9,7 @@ from opentelemetry.trace import Status, StatusCode
 
 from core.config import settings
 from core.telemetry import (
-    agent_runs_counter, get_standard_attributes, get_tracer, human_escalations_counter,
+    agent_runs_counter, circuit_breaker_trips_counter, get_standard_attributes, get_tracer, human_escalations_counter,
     set_execution_context, workflow_completions_counter, workflow_iterations_counter,
 )
 from graph.state import AgentRunState
@@ -30,7 +30,7 @@ def build_workflow(
 
     for name in AGENT_NODES:
         def execute_node(state: AgentRunState, node_name=name):
-            decision = breaker.begin_iteration(node_name)
+            decision = breaker.begin_iteration(node_name) if node_name == "triage" else breaker.evaluate(node_name)
             iteration = breaker.iteration
             set_execution_context(state["case_id"], state["run_id"], node_name, iteration=iteration)
             workflow_iterations_counter.add(1, {"node": node_name})
@@ -71,13 +71,18 @@ def build_workflow(
     graph.add_node("human_review", human_review)
     graph.add_edge(START, AGENT_NODES[0])
 
-    for index, name in enumerate(AGENT_NODES):
+    for index, name in enumerate(AGENT_NODES[:-1]):
         next_node = AGENT_NODES[index + 1] if index + 1 < len(AGENT_NODES) else END
         graph.add_conditional_edges(
             name,
             lambda state: "safe_halt" if state.get("halt") else "continue",
             {"safe_halt": "safe_halt", "continue": next_node},
         )
+    graph.add_conditional_edges(
+        "monitor",
+        lambda state: "safe_halt" if state.get("halt") else ("loop" if state.get("force_loop_until_limit") else "done"),
+        {"safe_halt": "safe_halt", "loop": "triage", "done": END},
+    )
     graph.add_edge("safe_halt", "human_review")
     graph.add_edge("human_review", END)
     return graph.compile()
@@ -88,11 +93,13 @@ def run_agent_workflow(
     run_id: Optional[str] = None,
     handlers: Optional[dict[str, Callable[[AgentRunState], dict]]] = None,
     breaker: Optional[CircuitBreaker] = None,
+    loop_until_limit: bool = False,
 ) -> AgentRunState:
     """Execute and return final state; breaker signals are caught within LangGraph."""
     run_id = run_id or str(uuid4())
     breaker = breaker or CircuitBreaker()
-    initial: AgentRunState = {"case_id": case_id, "run_id": run_id, "status": "running", "history": []}
+    initial: AgentRunState = {"case_id": case_id, "run_id": run_id, "status": "running", "history": [],
+                              "force_loop_until_limit": loop_until_limit}
     token = bind_circuit_breaker(breaker)
     set_execution_context(case_id, run_id, node="agent_root", iteration=0)
     tracer = get_tracer()
@@ -103,13 +110,26 @@ def run_agent_workflow(
     try:
         with trace.use_span(root, end_on_exit=False):
             result = build_workflow(breaker, handlers).invoke(initial)
-        if result.get("halt"):
-            root.set_attribute("status", "HALTED")
-            root.add_event("CIRCUIT_BREAKER_TRIPPED", result["halt"])
-            human_escalations_counter.add(1, {"trigger": result["halt"].get("trigger", "NODE_ERROR")})
-        else:
-            result["status"] = "resolved"
-            workflow_completions_counter.add(1, {"status": "SUCCESS"})
+            if result.get("halt"):
+                halt = result["halt"]
+                attrs = get_standard_attributes(
+                    node=halt.get("node", ""), iteration=halt.get("iteration", breaker.iteration),
+                    status="HALT", additional={
+                        "trigger": halt.get("trigger", "NODE_ERROR"),
+                        "threshold": halt.get("threshold", -1),
+                        "observed": halt.get("observed", -1),
+                        "failure_count": halt.get("failure_count", breaker.consecutive_failures),
+                    },
+                )
+                with tracer.start_as_current_span("circuit_breaker_decision", attributes=attrs) as decision_span:
+                    decision_span.add_event("CIRCUIT_BREAKER_TRIPPED", halt)
+                root.set_attribute("status", "HALTED")
+                root.add_event("CIRCUIT_BREAKER_TRIPPED", halt)
+                circuit_breaker_trips_counter.add(1, {"trigger": halt.get("trigger", "NODE_ERROR")})
+                human_escalations_counter.add(1, {"trigger": halt.get("trigger", "NODE_ERROR")})
+            else:
+                result["status"] = "resolved"
+                workflow_completions_counter.add(1, {"status": "SUCCESS"})
         root.set_status(Status(StatusCode.OK))
         return result
     except Exception as exc:
