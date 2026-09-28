@@ -40,7 +40,7 @@ def _run_demo(case_id: str, run_id: str, request: AgentRunRequest) -> dict:
     tool_events: List[dict] = []
     loop_until_limit = False
 
-    if request.demo_scenario is None:
+    if request.demo_scenario is None or request.demo_scenario in ("normal", "timeout", "clean", "high_value"):
         # Deterministic local demo path exercises the same central LLM/tool wrappers.
         def llm_node(node: str, usage: dict):
             def invoke(state):
@@ -66,7 +66,7 @@ def _run_demo(case_id: str, run_id: str, request: AgentRunRequest) -> dict:
             "execute": query_demo_ledgers,
         })
 
-    if request.demo_scenario == "consecutive_tool_failures":
+    if request.demo_scenario in ("consecutive_tool_failures", "breaker_trip"):
         def fail_tools(state):
             for attempt in range(10):
                 try:

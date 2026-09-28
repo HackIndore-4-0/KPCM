@@ -26,41 +26,165 @@ export const LedgerDiffTable: React.FC<LedgerDiffTableProps> = ({
   rrn = '408219482910',
   amount = 1499,
 }) => {
-  // Default tri-party asymmetric timeout scenario if none provided
-  const defaultEntries: LedgerEntry[] = [
-    {
-      source: 'Bank CBS',
-      refNumber: rrn,
-      status: 'DEBIT_SUCCESS',
-      statusCode: '00',
-      amount: amount,
-      timestamp: '2026-09-28 14:32:01 IST',
-      isMatched: true,
-      notes: 'Customer account successfully debited; authorization token issued.',
-    },
-    {
-      source: 'NPCI Switch',
-      refNumber: rrn,
-      status: 'TIMEOUT_ASYMMETRIC',
-      statusCode: 'U69',
-      amount: amount,
-      timestamp: '2026-09-28 14:32:06 IST',
-      isMatched: false,
-      notes: 'Switch received debit confirmation; downstream beneficiary ACK timed out.',
-    },
-    {
-      source: 'Merchant PG',
-      refNumber: `ORD-${rrn.slice(-6)}`,
-      status: 'PAYMENT_PENDING_EXPIRED',
-      statusCode: 'M404',
-      amount: 0,
-      timestamp: '2026-09-28 14:35:00 IST',
-      isMatched: false,
-      notes: 'No inbound credit confirmed within 180s checkout window.',
-    },
-  ];
+  const getDefaultEntries = (): { items: LedgerEntry[]; badge: string; conclusion: string } => {
+    if (caseId === 'CASE-2026-3108') {
+      return {
+        badge: 'CLEAN 3-WAY MATCH CONFIRMED',
+        conclusion: 'All three institutions confirm clean transaction settlement. Claim of duplicate debit is unsubstantiated.',
+        items: [
+          {
+            source: 'Bank CBS',
+            refNumber: rrn,
+            status: 'DEBIT_SUCCESS',
+            statusCode: '00',
+            amount: amount,
+            timestamp: '2026-09-28 11:15:28 IST',
+            isMatched: true,
+            notes: 'Single debit of ₹450.00 confirmed; auth token 894102. No duplicate debit.',
+          },
+          {
+            source: 'NPCI Switch',
+            refNumber: rrn,
+            status: 'SWITCH_CLEARED',
+            statusCode: '00',
+            amount: amount,
+            timestamp: '2026-09-28 11:15:29 IST',
+            isMatched: true,
+            notes: 'Central switch routing completed; beneficiary ACK confirmed.',
+          },
+          {
+            source: 'Merchant PG',
+            refNumber: `ORD-${rrn.slice(-6)}`,
+            status: 'PAYMENT_SETTLED',
+            statusCode: 'M200',
+            amount: amount,
+            timestamp: '2026-09-28 11:15:30 IST',
+            isMatched: true,
+            notes: 'Merchant POS credit confirmed; invoice #CCD-9102 settled.',
+          },
+        ],
+      };
+    }
 
-  const ledgerData = entries || defaultEntries;
+    if (caseId === 'CASE-2026-FAIL') {
+      return {
+        badge: 'CIRCUIT BREAKER SAFE HALT',
+        conclusion: 'Consecutive tool failure limit exceeded. Execution safely halted for manual reconciliation.',
+        items: [
+          {
+            source: 'Bank CBS',
+            refNumber: rrn,
+            status: 'GATEWAY_TIMEOUT',
+            statusCode: 'CBS504',
+            amount: amount,
+            timestamp: '2026-09-28 12:15:01 IST',
+            isMatched: false,
+            notes: 'Repeated core banking timeouts (4 attempts). Breaker triggered.',
+          },
+          {
+            source: 'NPCI Switch',
+            refNumber: rrn,
+            status: 'ROUTING_PENDING',
+            statusCode: 'U99',
+            amount: amount,
+            timestamp: '2026-09-28 12:15:05 IST',
+            isMatched: false,
+            notes: 'Central switch awaiting sender bank response packet.',
+          },
+          {
+            source: 'Merchant PG',
+            refNumber: `ORD-${rrn.slice(-6)}`,
+            status: 'ORDER_EXPIRED',
+            statusCode: 'M404',
+            amount: 0,
+            timestamp: '2026-09-28 12:18:00 IST',
+            isMatched: false,
+            notes: 'No inbound credit confirmed before checkout session expiration.',
+          },
+        ],
+      };
+    }
+
+    if (caseId === 'CASE-2026-8812') {
+      return {
+        badge: 'HIGH-VALUE DISCREPANCY (> ₹50k)',
+        conclusion: 'High-value transaction held in transit clearing buffer. Escalated for human review.',
+        items: [
+          {
+            source: 'Bank CBS',
+            refNumber: rrn,
+            status: 'DEBIT_SUCCESS',
+            statusCode: '00',
+            amount: amount,
+            timestamp: '2026-09-28 09:40:12 IST',
+            isMatched: true,
+            notes: 'Corporate debit of ₹85,000 confirmed under Batch REF-99201.',
+          },
+          {
+            source: 'NPCI Switch',
+            refNumber: rrn,
+            status: 'CLEARING_PENDING',
+            statusCode: 'U10',
+            amount: amount,
+            timestamp: '2026-09-28 09:40:18 IST',
+            isMatched: false,
+            notes: 'High-value packet awaiting inter-bank clearing window.',
+          },
+          {
+            source: 'Merchant PG',
+            refNumber: `ORD-${rrn.slice(-6)}`,
+            status: 'ERP_UNCONFIRMED',
+            statusCode: 'M404',
+            amount: 0,
+            timestamp: '2026-09-28 10:00:00 IST',
+            isMatched: false,
+            notes: 'Vendor accounts ledger has not credited order settlement.',
+          },
+        ],
+      };
+    }
+
+    // Default: CASE-2026-9041 (Asymmetric U69 Timeout ₹1,499)
+    return {
+      badge: 'ASYMMETRIC DISCREPANCY DETECTED',
+      conclusion: 'Beneficiary bank failed to acknowledge receipt. Funds debited from citizen held in transit buffer. Reversal recommended.',
+      items: [
+        {
+          source: 'Bank CBS',
+          refNumber: rrn,
+          status: 'DEBIT_SUCCESS',
+          statusCode: '00',
+          amount: amount,
+          timestamp: '2026-09-28 14:32:01 IST',
+          isMatched: true,
+          notes: 'Customer account successfully debited; authorization token issued.',
+        },
+        {
+          source: 'NPCI Switch',
+          refNumber: rrn,
+          status: 'TIMEOUT_ASYMMETRIC',
+          statusCode: 'U69',
+          amount: amount,
+          timestamp: '2026-09-28 14:32:06 IST',
+          isMatched: false,
+          notes: 'Switch received debit confirmation; downstream beneficiary ACK timed out.',
+        },
+        {
+          source: 'Merchant PG',
+          refNumber: `ORD-${rrn.slice(-6)}`,
+          status: 'PAYMENT_PENDING_EXPIRED',
+          statusCode: 'M404',
+          amount: 0,
+          timestamp: '2026-09-28 14:35:00 IST',
+          isMatched: false,
+          notes: 'No inbound credit confirmed within 180s checkout window.',
+        },
+      ],
+    };
+  };
+
+  const scenario = getDefaultEntries();
+  const ledgerData = entries || scenario.items;
 
   return (
     <div className="rounded-2xl border border-panel-border bg-panel overflow-hidden">
@@ -78,8 +202,14 @@ export const LedgerDiffTable: React.FC<LedgerDiffTableProps> = ({
           </div>
         </div>
         <div className="flex items-center gap-2 text-[10px] font-mono">
-          <span className="px-2 py-0.5 rounded bg-terracotta/15 border border-terracotta/40 text-terracotta">
-            ASYMMETRIC DISCREPANCY DETECTED
+          <span
+            className={`px-2 py-0.5 rounded border font-semibold ${
+              caseId === 'CASE-2026-3108'
+                ? 'bg-emerald/15 border-emerald/40 text-emerald'
+                : 'bg-terracotta/15 border-terracotta/40 text-terracotta'
+            }`}
+          >
+            {scenario.badge}
           </span>
         </div>
       </div>
@@ -173,12 +303,24 @@ export const LedgerDiffTable: React.FC<LedgerDiffTableProps> = ({
         <div className="flex items-center gap-2 text-cyan">
           <AlertCircle className="w-4 h-4 shrink-0" />
           <span className="font-sans text-gray-300">
-            <strong>Reconciliation Conclusion:</strong> Beneficiary bank failed to acknowledge receipt. Funds debited from citizen held in transit buffer.
+            <strong>Reconciliation Conclusion:</strong> {scenario.conclusion}
           </span>
         </div>
         <div className="shrink-0 text-right">
-          <span className="text-[10px] font-mono px-2.5 py-1 rounded bg-emerald/15 text-emerald border border-emerald/40 font-semibold">
-            RECOMMENDED: IMMEDIATE REVERSAL TO SENDER
+          <span
+            className={`text-[10px] font-mono px-2.5 py-1 rounded border font-semibold ${
+              caseId === 'CASE-2026-3108'
+                ? 'bg-emerald/15 text-emerald border-emerald/40'
+                : 'bg-cyan/15 text-cyan border-cyan/40'
+            }`}
+          >
+            {caseId === 'CASE-2026-3108'
+              ? 'RECOMMENDATION: DISPUTE DISMISSAL'
+              : caseId === 'CASE-2026-8812'
+              ? 'RECOMMENDATION: ROUTE TO HUMAN REVIEW'
+              : caseId === 'CASE-2026-FAIL'
+              ? 'STATE: SAFE DEGRADATION HALT'
+              : 'RECOMMENDATION: REVERSAL TO SENDER'}
           </span>
         </div>
       </div>

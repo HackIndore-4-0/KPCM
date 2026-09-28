@@ -29,7 +29,80 @@ interface CaseDetailProps {
   lang: Language;
 }
 
+interface CaseMetadata {
+  amount: number;
+  merchant: string;
+  rrn: string;
+  verdictAction: string;
+  batchRef: string;
+  findings: Array<{ text: string; color: 'emerald' | 'terracotta' | 'amber' }>;
+  notes: string;
+}
+
+function getCaseMetadata(caseId: string): CaseMetadata {
+  if (caseId.includes('3108')) {
+    return {
+      amount: 450,
+      merchant: 'Cafe Coffee Day UPI (Synthetic Sandbox)',
+      rrn: '329184029182',
+      verdictAction: 'RECOMMEND_REVERSAL_TO_SENDER',
+      batchRef: 'REV-2026-3108-002',
+      findings: [
+        { text: 'Sender CBS: Debit confirmed at 16:15:22 IST (₹450.00)', color: 'emerald' },
+        { text: 'NPCI Switch: Settlement window elapsed without beneficiary ACK', color: 'terracotta' },
+        { text: 'Merchant Terminal: POS timeout reported; no goods released', color: 'amber' },
+      ],
+      notes: 'Standard low-value UPI auto-reconciliation recommendation.',
+    };
+  }
+  if (caseId.includes('8812')) {
+    return {
+      amount: 85000,
+      merchant: 'Vendor IMPS Remittance (Synthetic Sandbox)',
+      rrn: '992019482711',
+      verdictAction: 'ESCALATE_FOR_HUMAN_REVIEW',
+      batchRef: 'ESC-2026-8812-HV',
+      findings: [
+        { text: 'Sender CBS: High-value IMPS debit verified (₹85,000.00)', color: 'emerald' },
+        { text: 'NPCI Switch: Clearing batch in-transit; unconfirmed beneficiary ACK', color: 'amber' },
+        { text: 'Safety Policy: Amount exceeds autonomous payout threshold (₹50,000 Cap)', color: 'terracotta' },
+      ],
+      notes: 'High-value threshold reached. Ombudsman sign-off required prior to reversal execution.',
+    };
+  }
+  if (caseId.includes('FAIL')) {
+    return {
+      amount: 2500,
+      merchant: 'Runaway Loop Simulation (Synthetic Sandbox)',
+      rrn: '555123984102',
+      verdictAction: 'HALTED_BY_CIRCUIT_BREAKER',
+      batchRef: 'HALT-2026-FAIL-CB',
+      findings: [
+        { text: 'Sender CBS: Repeated mock tool timeouts triggered', color: 'terracotta' },
+        { text: 'Circuit Breaker: Consecutive failure limit (4) reached', color: 'terracotta' },
+        { text: 'LangGraph Orchestration: Terminated gracefully to prevent budget runaway', color: 'amber' },
+      ],
+      notes: 'Circuit breaker safely halted execution. Human review required for manual resolution.',
+    };
+  }
+  // Default (e.g., CASE-2026-9041)
+  return {
+    amount: 1499,
+    merchant: 'Swiggy UPI (Synthetic Sandbox)',
+    rrn: '408219482910',
+    verdictAction: 'RECOMMEND_REVERSAL_TO_SENDER',
+    batchRef: 'REV-2026-9041-001',
+    findings: [
+      { text: 'Sender CBS: Debit confirmed at 14:32:01 IST (₹1,499.00)', color: 'emerald' },
+      { text: 'NPCI Switch: Beneficiary timeout code U69 returned', color: 'terracotta' },
+      { text: 'Merchant Gateway: Order expired unpaid (No credit received)', color: 'amber' },
+    ],
+    notes: 'Tri-party ledger asymmetry isolated. Clean reversal recommendation generated.',
+  };
+}
+
 export const CaseDetail: React.FC<CaseDetailProps> = ({ caseId, onNavigate, lang }) => {
+  const meta = getCaseMetadata(caseId);
   const t = translations[lang] || translations.en;
   const [activeTab, setActiveTab] = useState<'dag' | 'trace' | 'ledgers' | 'verdict'>('dag');
   const [isRetriggering, setIsRetriggering] = useState<boolean>(false);
@@ -38,6 +111,7 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseId, onNavigate, lang
   const {
     events,
     isStreaming,
+    runId,
     activeNode,
     completedNodes,
     haltedNode,
@@ -48,6 +122,7 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseId, onNavigate, lang
     tokenUsage,
     clearEvents,
     reconnect,
+    syncTimeline,
   } = useCaseStream(caseId);
 
   // If stream is empty or finished, optionally fetch initial snapshot
@@ -56,7 +131,9 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseId, onNavigate, lang
     const loadSnapshot = async () => {
       try {
         const snap = await getCaseStatus(caseId);
-        // Snapshot fetched if needed
+        if (isMounted && snap) {
+          // Case status fetched from backend
+        }
       } catch (err) {
         // Backend might still be spinning up or case not yet persisted
       }
@@ -78,7 +155,7 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseId, onNavigate, lang
         max_consecutive_tool_failures: 4,
         max_token_budget: 10000,
         max_iterations: 10,
-        demo_scenario: 'timeout',
+        demo_scenario: caseId.includes('FAIL') ? 'consecutive_tool_failures' : 'normal',
       });
       reconnect();
     } catch (err) {
@@ -124,7 +201,7 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseId, onNavigate, lang
               )}
             </div>
             <p className="text-xs text-gray-400 font-mono mt-0.5">
-              Ref RRN: 408219482910 &bull; Disputed Amount: {formatINR(1499)} &bull; Swiggy UPI (Synthetic Sandbox)
+              Ref RRN: {meta.rrn} &bull; Disputed Amount: {formatINR(meta.amount)} &bull; {meta.merchant}
             </p>
           </div>
         </div>
@@ -264,9 +341,9 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseId, onNavigate, lang
           <div className="space-y-6">
             <ConfidenceMeter
               confidence={confidence}
-              amount={1499}
+              amount={meta.amount}
               tokenUsage={tokenUsage}
-              consecutiveFailures={haltEvent ? 3 : 0}
+              consecutiveFailures={haltEvent ? 4 : (caseId.includes('FAIL') ? 4 : 0)}
               circuitBreakerTripped={isBreakerHalted}
             />
             
@@ -304,6 +381,8 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseId, onNavigate, lang
             events={events}
             isStreaming={isStreaming}
             onClear={clearEvents}
+            runId={runId}
+            onSyncTimeline={syncTimeline}
           />
         </div>
       )}
@@ -312,8 +391,8 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseId, onNavigate, lang
         <div className="space-y-6">
           <LedgerDiffTable
             caseId={caseId}
-            rrn="408219482910"
-            amount={1499}
+            rrn={meta.rrn}
+            amount={meta.amount}
           />
         </div>
       )}
@@ -333,8 +412,14 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseId, onNavigate, lang
               </div>
             </div>
 
-            <span className="px-3 py-1 rounded-full text-xs font-mono font-bold bg-emerald/20 text-emerald border border-emerald/50">
-              RECOMMEND_REVERSAL_TO_SENDER
+            <span className={`px-3 py-1 rounded-full text-xs font-mono font-bold ${
+              meta.verdictAction.includes('RECOMMEND')
+                ? 'bg-emerald/20 text-emerald border border-emerald/50'
+                : meta.verdictAction.includes('ESCALATE')
+                ? 'bg-amber/20 text-amber border border-amber/50'
+                : 'bg-terracotta/20 text-terracotta border border-terracotta/50'
+            }`}>
+              {meta.verdictAction}
             </span>
           </div>
 
@@ -344,18 +429,14 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseId, onNavigate, lang
                 Reconciliation Findings
               </span>
               <ul className="space-y-2 text-gray-300">
-                <li className="flex items-center gap-2">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald" />
-                  <span>Sender CBS: Debit confirmed at 14:32:01 IST (₹1,499.00)</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <span className="w-1.5 h-1.5 rounded-full bg-terracotta" />
-                  <span>NPCI Switch: Beneficiary timeout code U69 returned</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <span className="w-1.5 h-1.5 rounded-full bg-amber" />
-                  <span>Merchant Gateway: Order expired unpaid (No credit received)</span>
-                </li>
+                {meta.findings.map((f, idx) => (
+                  <li key={idx} className="flex items-center gap-2">
+                    <span className={`w-1.5 h-1.5 rounded-full ${
+                      f.color === 'emerald' ? 'bg-emerald' : f.color === 'terracotta' ? 'bg-terracotta' : 'bg-amber'
+                    }`} />
+                    <span>{f.text}</span>
+                  </li>
+                ))}
               </ul>
             </div>
 
@@ -366,11 +447,11 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseId, onNavigate, lang
               <div className="space-y-1.5 font-mono text-[11px]">
                 <div className="flex justify-between text-gray-400">
                   <span>Action:</span>
-                  <span className="text-cyan font-bold">RECOMMEND_REVERSAL_TO_SENDER</span>
+                  <span className="text-cyan font-bold">{meta.verdictAction}</span>
                 </div>
                 <div className="flex justify-between text-gray-400">
                   <span>Suggested Batch Ref:</span>
-                  <span className="text-white">REV-2026-9041-001</span>
+                  <span className="text-white">{meta.batchRef}</span>
                 </div>
                 <div className="flex justify-between text-gray-400">
                   <span>Workflow State:</span>
@@ -378,7 +459,7 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseId, onNavigate, lang
                 </div>
                 <div className="flex justify-between text-gray-400">
                   <span>Policy Reference:</span>
-                  <span className="text-gray-300">Simulated T+1 Reversal Guideline</span>
+                  <span className="text-gray-300">RBI Master Direction / Simulated T+1</span>
                 </div>
               </div>
             </div>

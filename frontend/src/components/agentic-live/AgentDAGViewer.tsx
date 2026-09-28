@@ -103,16 +103,77 @@ export const AgentDAGViewer: React.FC<AgentDAGViewerProps> = ({
 }) => {
   // Determine status for a given node id
   const getNodeStatus = (nodeId: string): 'idle' | 'running' | 'completed' | 'halted' | 'failed' => {
-    if (haltedNode === nodeId) return 'halted';
-    if (activeNode === nodeId) return 'running';
+    // Breaker halted status
+    if (
+      haltedNode === nodeId ||
+      (nodeId === 'execute' && (haltedNode === 'merchant_verification' || haltedNode === 'safe_halt')) ||
+      (nodeId === 'human_review' && (haltedNode === 'safe_halt' || haltedNode === 'human_review'))
+    ) {
+      return 'halted';
+    }
+
+    // Active status
+    if (
+      activeNode === nodeId ||
+      (nodeId === 'execute' && activeNode === 'merchant_verification') ||
+      (nodeId === 'resolve' && activeNode === 'monitor') ||
+      (nodeId === 'human_review' && activeNode === 'human_review')
+    ) {
+      return 'running';
+    }
+
+    // Completed status
     if (completedNodes.includes(nodeId)) return 'completed';
+
+    // Intermediary node completion bridge for backend execution flow
+    if (
+      nodeId === 'evidence_gatherer' &&
+      (completedNodes.includes('evidence_gatherer') ||
+        completedNodes.includes('planner') ||
+        completedNodes.includes('validator') ||
+        completedNodes.includes('execute') ||
+        completedNodes.includes('monitor'))
+    ) {
+      return 'completed';
+    }
+    if (
+      nodeId === 'conflict_arbiter' &&
+      (completedNodes.includes('conflict_arbiter') ||
+        completedNodes.includes('planner') ||
+        completedNodes.includes('validator') ||
+        completedNodes.includes('execute') ||
+        completedNodes.includes('monitor'))
+    ) {
+      return 'completed';
+    }
+    if (
+      nodeId === 'execute' &&
+      (completedNodes.includes('execute') || completedNodes.includes('merchant_verification'))
+    ) {
+      return 'completed';
+    }
+    if (
+      nodeId === 'resolve' &&
+      (completedNodes.includes('resolve') || completedNodes.includes('monitor'))
+    ) {
+      return 'completed';
+    }
+
     return 'idle';
   };
 
   // Find latest detail message for a node
   const getNodeDetail = (nodeId: string) => {
     const rev = [...events].reverse();
-    const ev = rev.find((e) => e.node === nodeId || e.action?.toLowerCase().includes(nodeId));
+    const ev = rev.find(
+      (e) =>
+        e.node === nodeId ||
+        (nodeId === 'execute' && e.node === 'merchant_verification') ||
+        (nodeId === 'resolve' && e.node === 'monitor') ||
+        (nodeId === 'evidence_gatherer' && e.action?.toLowerCase().includes('cbs')) ||
+        (nodeId === 'conflict_arbiter' && e.action?.toLowerCase().includes('ledger')) ||
+        e.action?.toLowerCase().includes(nodeId)
+    );
     return ev?.msg || undefined;
   };
 

@@ -51,7 +51,7 @@ export async function getHealth(): Promise<HealthResponse> {
 export async function checkBackendHealth(): Promise<boolean> {
   try {
     const data = await getHealth();
-    return data?.status === 'ok';
+    return data?.status === 'healthy' || data?.status === 'ok';
   } catch {
     return false;
   }

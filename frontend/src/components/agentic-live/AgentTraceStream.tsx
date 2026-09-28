@@ -7,12 +7,16 @@ interface AgentTraceStreamProps {
   events: TimelineEvent[];
   isStreaming?: boolean;
   onClear?: () => void;
+  runId?: string | null;
+  onSyncTimeline?: () => void;
 }
 
 export const AgentTraceStream: React.FC<AgentTraceStreamProps> = ({
   events,
   isStreaming = false,
   onClear,
+  runId,
+  onSyncTimeline,
 }) => {
   const [filterNode, setFilterNode] = useState<string>('ALL');
   const [autoScroll, setAutoScroll] = useState<boolean>(true);
@@ -141,6 +145,17 @@ export const AgentTraceStream: React.FC<AgentTraceStreamProps> = ({
           >
             {autoScroll ? <Play className="w-3.5 h-3.5" /> : <Pause className="w-3.5 h-3.5" />}
           </button>
+
+          {/* Sync Timeline from GET /agent/runs/{run_id}/timeline */}
+          {runId && onSyncTimeline && (
+            <button
+              onClick={onSyncTimeline}
+              className="p-1.5 rounded bg-white/5 hover:bg-white/10 text-gray-300 hover:text-cyan transition-colors"
+              title={`Sync Timeline from GET /agent/runs/${runId}/timeline`}
+            >
+              <RefreshCw className="w-3.5 h-3.5" />
+            </button>
+          )}
 
           {/* Export JSON */}
           <button

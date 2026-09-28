@@ -64,9 +64,9 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate, lang }) =>
 
         {/* Hero Title */}
         <h1 className="text-4xl sm:text-6xl font-black tracking-tight text-white leading-tight">
-          Explainable AI for <br />
+          Resolve Complex Financial Grievances. <br />
           <span className="bg-gradient-to-r from-cyan via-blue-400 to-magenta bg-clip-text text-transparent">
-            Failed Digital Payments
+            With Explainable AI.
           </span>
         </h1>
 
