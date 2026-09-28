@@ -67,8 +67,9 @@ export default {
         },
       },
       fontFamily: {
-        sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
-        mono: ['JetBrains Mono', 'Fira Code', 'ui-monospace', 'monospace'],
+        sans: ['Georgia', '"Times New Roman"', 'Times', 'serif'],
+        serif: ['Georgia', '"Times New Roman"', 'Times', 'serif'],
+        mono: ['Georgia', '"Times New Roman"', 'Times', 'serif'],
       },
       letterSpacing: {
         tighter: '-0.04em',
