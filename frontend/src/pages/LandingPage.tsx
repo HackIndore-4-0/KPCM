@@ -52,9 +52,9 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate, lang }) =>
   return (
     <div className="space-y-16 pb-16">
       {/* Hero Section */}
-      <section className="relative pt-8 sm:pt-14 text-center max-w-4xl mx-auto px-4">
+      <section className="relative pt-8 sm:pt-14 text-center max-w-4xl mx-auto px-4 overflow-hidden">
         {/* Glowing cyber aura */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[300px] bg-cyan/10 blur-[120px] rounded-full pointer-events-none" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] max-w-full h-[300px] bg-cyan/10 blur-[120px] rounded-full pointer-events-none" />
 
         {/* Top Badge */}
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan/10 border border-cyan/30 text-cyan text-xs font-mono mb-6 shadow-cyan-sm">

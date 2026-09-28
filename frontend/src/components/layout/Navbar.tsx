@@ -57,7 +57,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               <span className="text-lg font-bold tracking-tight text-white group-hover:text-cyan transition-colors">
                 FinResolve
               </span>
-              <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded-full bg-cyan/10 border border-cyan/30 text-cyan">
+              <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded-full bg-cyan/10 border border-cyan/30 text-cyan hidden sm:inline-block">
                 Decision Support
               </span>
             </div>
