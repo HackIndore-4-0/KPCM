@@ -8,3 +8,12 @@ export const apiClient = axios.create({
     'Content-Type': 'application/json',
   },
 });
+
+// Attach JWT access token from localStorage if available
+apiClient.interceptors.request.use((config) => {
+  const token = localStorage.getItem('finresolve_token');
+  if (token && config.headers) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
