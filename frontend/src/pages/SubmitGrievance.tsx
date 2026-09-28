@@ -59,7 +59,7 @@ export const SubmitGrievance: React.FC<SubmitGrievanceProps> = ({ onNavigate, la
       setRrn('555123984102');
       setComplaint('Test trigger for runaway loop protection. Tool failure threshold simulation.');
       setDemoScenario('breaker_trip');
-      setMaxFailures(2); // Strict failure threshold to force breaker halt
+      setMaxFailures(4); // Authoritative production circuit breaker threshold
       setMaxTokens(10000);
     }
   };
