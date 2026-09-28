@@ -7,45 +7,85 @@ import CaseDetail from './pages/CaseDetail';
 import OmbudsmanDashboard from './pages/OmbudsmanDashboard';
 import { Language } from './lib/translations';
 
+function parseRouteFromLocation(): { tab: string; caseId?: string } {
+  if (typeof window === 'undefined') {
+    return { tab: 'landing' };
+  }
+
+  // Check pathname first
+  const pathname = window.location.pathname.replace(/\/$/, '') || '/';
+  if (pathname.startsWith('/case/')) {
+    const id = decodeURIComponent(pathname.replace('/case/', ''));
+    if (id) return { tab: 'case', caseId: id };
+    return { tab: 'case' };
+  }
+  if (pathname === '/case') {
+    return { tab: 'case' };
+  }
+  if (pathname === '/submit') {
+    return { tab: 'submit' };
+  }
+  if (pathname === '/ombudsman') {
+    return { tab: 'ombudsman' };
+  }
+
+  // Fallback: check hash for deep links like #case/..., #submit, #ombudsman
+  const hash = window.location.hash.replace(/^#\/?/, '');
+  if (hash) {
+    if (hash.startsWith('case/')) {
+      const id = decodeURIComponent(hash.replace('case/', ''));
+      if (id) return { tab: 'case', caseId: id };
+      return { tab: 'case' };
+    }
+    if (hash === 'case') return { tab: 'case' };
+    if (hash === 'submit') return { tab: 'submit' };
+    if (hash === 'ombudsman') return { tab: 'ombudsman' };
+  }
+
+  return { tab: 'landing' };
+}
+
 export const App: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<string>('landing');
-  const [activeCaseId, setActiveCaseId] = useState<string>('CASE-2026-9041');
+  const initialRoute = parseRouteFromLocation();
+  const [activeTab, setActiveTab] = useState<string>(initialRoute.tab);
+  const [activeCaseId, setActiveCaseId] = useState<string>(initialRoute.caseId || 'CASE-2026-9041');
   const [lang, setLang] = useState<Language>('en');
 
-  // Handle URL hash changes for deep linking
+  // Handle URL pathname and hash changes for deep linking and back/forward navigation
   useEffect(() => {
-    const parseHash = () => {
-      const hash = window.location.hash.replace(/^#\/?/, '');
-      if (!hash) {
-        setActiveTab('landing');
-        return;
-      }
-      if (hash.startsWith('case/')) {
-        const id = hash.replace('case/', '');
-        if (id) setActiveCaseId(id);
-        setActiveTab('case');
-      } else if (hash === 'case') {
-        setActiveTab('case');
-      } else if (hash === 'submit') {
-        setActiveTab('submit');
-      } else if (hash === 'ombudsman') {
-        setActiveTab('ombudsman');
-      } else {
-        setActiveTab('landing');
+    const syncRoute = () => {
+      const route = parseRouteFromLocation();
+      setActiveTab(route.tab);
+      if (route.caseId) {
+        setActiveCaseId(route.caseId);
       }
     };
 
-    parseHash();
-    window.addEventListener('hashchange', parseHash);
-    return () => window.removeEventListener('hashchange', parseHash);
+    window.addEventListener('popstate', syncRoute);
+    window.addEventListener('hashchange', syncRoute);
+    return () => {
+      window.removeEventListener('popstate', syncRoute);
+      window.removeEventListener('hashchange', syncRoute);
+    };
   }, []);
 
   const handleNavigate = (tab: string, caseId?: string) => {
-    if (caseId) {
+    let targetPath = '/';
+    if (tab === 'case' && caseId) {
       setActiveCaseId(caseId);
-      window.location.hash = `#case/${caseId}`;
+      targetPath = `/case/${encodeURIComponent(caseId)}`;
+    } else if (tab === 'case') {
+      targetPath = activeCaseId ? `/case/${encodeURIComponent(activeCaseId)}` : '/case';
+    } else if (tab === 'submit') {
+      targetPath = '/submit';
+    } else if (tab === 'ombudsman') {
+      targetPath = '/ombudsman';
     } else {
-      window.location.hash = `#${tab}`;
+      targetPath = '/';
+    }
+
+    if (window.location.pathname !== targetPath) {
+      window.history.pushState({ tab, caseId }, '', targetPath);
     }
     setActiveTab(tab);
     window.scrollTo({ top: 0, behavior: 'smooth' });

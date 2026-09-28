@@ -3,11 +3,11 @@ import { AgentRunRequest, AgentRunResponse, HealthResponse, TimelineResponse } f
 
 export const VITE_API_BASE_URL = (
   (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_API_BASE_URL) ||
-  'http://localhost:8000'
+  (import.meta.env?.DEV ? 'http://localhost:8000' : '')
 ).replace(/\/$/, '');
 
 export const apiClient = axios.create({
-  baseURL: VITE_API_BASE_URL,
+  baseURL: VITE_API_BASE_URL || undefined,
   headers: {
     'Content-Type': 'application/json',
   },
