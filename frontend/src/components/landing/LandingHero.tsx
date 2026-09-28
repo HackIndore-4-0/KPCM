@@ -530,8 +530,8 @@ export const LandingHero: React.FC<LandingHeroProps> = ({
           whileTap={{ scale: 0.98 }}
           className="flex items-center gap-2.5 cursor-pointer group"
         >
-          <div className="w-8 h-8 rounded-xl bg-cyan-500/8 border border-cyan-500/15 flex items-center justify-center text-cyan-400 group-hover:border-cyan-500/35 group-hover:shadow-[0_0_12px_-3px_rgba(0,240,255,0.4)] transition-all">
-            <ShieldCheck className="w-4 h-4" />
+          <div className="w-8 h-8 rounded-xl bg-cyan-500/10 border border-cyan-500/25 flex items-center justify-center group-hover:border-cyan-500/40 group-hover:shadow-[0_0_15px_-2px_rgba(0,240,255,0.5)] transition-all overflow-hidden p-1">
+            <img src="/icons/finresolve-icon.svg" alt="FinResolve Logo" className="w-full h-full object-contain" />
           </div>
           <span className="font-mono tracking-wider font-bold text-[#e6e8ec]">
             FINRESOLVE

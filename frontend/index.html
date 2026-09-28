@@ -2,11 +2,42 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>FinResolve | Autonomous Financial Grievance Resolution Agent</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
+    
+    <!-- PWA Primary Manifest -->
+    <link rel="manifest" href="/manifest.webmanifest" />
+    
+    <!-- App Details & Branding -->
+    <title>FinResolve | Autonomous Multi-Ledger Financial Dispute Engine</title>
+    <meta name="description" content="Autonomous AI multi-ledger financial dispute reconciliation engine for Indian digital payment infrastructure under RBI statutory TAT guidelines." />
+    <meta name="application-name" content="FinResolve" />
+
+    <!-- Theme Colors -->
+    <meta name="theme-color" content="#05060a" />
+    <meta name="msapplication-TileColor" content="#05060a" />
+    <meta name="msapplication-navbutton-color" content="#05060a" />
+
+    <!-- iOS Safari PWA Meta Tags -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="FinResolve" />
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png" />
+    <link rel="mask-icon" href="/icons/finresolve-icon.svg" color="#00f0ff" />
+
+    <!-- Android & Standard PWA Meta Tags -->
+    <meta name="mobile-web-app-capable" content="yes" />
+
+    <!-- Fintech Vector Favicon & PNG Fallbacks -->
+    <link rel="icon" type="image/svg+xml" href="/icons/finresolve-icon.svg" />
+    <link rel="alternate icon" type="image/png" sizes="32x32" href="/icons/favicon-32x32.png" />
+    <link rel="alternate icon" type="image/x-icon" href="/favicon.ico" />
+
+    <!-- Preload Font Connections -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   </head>
-  <body class="bg-slate-950 text-slate-100">
+  <body class="bg-[#05060a] text-[#e6e8ec] selection:bg-cyan-500/30 selection:text-cyan-200">
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

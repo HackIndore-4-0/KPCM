@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Scale, Zap } from 'lucide-react';
+import { Scale, Zap, Download } from 'lucide-react';
 import { LandingHero } from './components/landing/LandingHero';
 import { SubmitGrievance } from './components/citizen/SubmitGrievance';
 import { CaseDetail } from './components/citizen/CaseDetail';
@@ -9,6 +9,7 @@ import { GlowCursorTrail } from './components/ui/glow-cursor-trail';
 import { Dispute, LedgerRecord, AgentTrace } from './types';
 import { SCENARIO_DATA } from './lib/mockData';
 import { useDisputeStream } from './hooks/useDisputeStream';
+import { usePWAInstall } from './hooks/usePWAInstall';
 import { apiClient } from './lib/api';
 
 type ActiveScreen = 'LANDING' | 'SUBMIT' | 'CASE_DETAIL' | 'OMBUDSMAN';
@@ -22,6 +23,7 @@ const NAV_TABS = [
 
 export const App: React.FC = () => {
   const [currentScreen, setCurrentScreen] = useState<ActiveScreen>('LANDING');
+  const { isInstallable, promptInstall } = usePWAInstall();
 
   const initialData = SCENARIO_DATA['SCENARIO_A'];
   const [dispute, setDispute] = useState<Dispute>(initialData.dispute);
@@ -174,8 +176,8 @@ export const App: React.FC = () => {
                   onClick={() => setCurrentScreen('LANDING')}
                   className="flex items-center gap-2.5 cursor-pointer group"
                 >
-                  <div className="w-8 h-8 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center group-hover:border-cyan-500/40 group-hover:shadow-glow-cyan transition-all">
-                    <Scale className="w-4 h-4 text-cyan-400" />
+                  <div className="w-8 h-8 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center group-hover:border-cyan-500/40 group-hover:shadow-glow-cyan transition-all overflow-hidden p-1">
+                    <img src="/icons/finresolve-icon.svg" alt="FinResolve" className="w-full h-full object-contain" />
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
@@ -210,8 +212,20 @@ export const App: React.FC = () => {
                   ))}
                 </nav>
 
-                {/* Engine Status */}
+                {/* Status & PWA Actions */}
                 <div className="flex items-center gap-3">
+                  {isInstallable && (
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={promptInstall}
+                      className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-[11px] font-mono text-cyan-300 hover:bg-cyan-500/20 hover:border-cyan-500/50 hover:shadow-glow-cyan transition-all cursor-pointer"
+                      title="Install FinResolve as a desktop or mobile app"
+                    >
+                      <Download className="w-3 h-3 text-cyan-400" />
+                      <span className="hidden sm:inline">Install PWA</span>
+                    </motion.button>
+                  )}
                   <span className="flex items-center gap-1.5 text-xs text-emerald-400 font-mono hidden sm:inline-flex">
                     <span className="relative flex">
                       <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-40 animate-ping" />

@@ -1,0 +1,67 @@
+{
+  "name": "FinResolve - Autonomous Financial Dispute Redressal",
+  "short_name": "FinResolve",
+  "description": "Autonomous AI multi-ledger financial dispute reconciliation engine for Indian digital payment infrastructure under RBI statutory TAT guidelines.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
+  "background_color": "#05060a",
+  "theme_color": "#05060a",
+  "orientation": "portrait-primary",
+  "lang": "en-IN",
+  "dir": "ltr",
+  "categories": ["finance", "business", "productivity", "utilities"],
+  "icons": [
+    {
+      "src": "/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-maskable-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icons/finresolve-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Lodge Grievance",
+      "short_name": "File Grievance",
+      "description": "Submit a new financial payment dispute",
+      "url": "/?screen=SUBMIT",
+      "icons": [
+        {
+          "src": "/icons/icon-192x192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Ombudsman Review",
+      "short_name": "Ombudsman",
+      "description": "Review pending escalated disputes and HITL approval queue",
+      "url": "/?screen=OMBUDSMAN",
+      "icons": [
+        {
+          "src": "/icons/icon-192x192.png",
+          "sizes": "192x192"
+        }
+      ]
+    }
+  ]
+}
