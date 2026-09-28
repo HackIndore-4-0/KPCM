@@ -22,9 +22,17 @@ from app.core.telemetry import (
     m_escalations_human
 )
 from app.core.supabase_client import supabase
+from app.core.sanitizer import mask_account_number
 
 VerdictType = Literal["APPROVE", "MODIFY", "REJECT"]
 EscalationStatus = Literal["PENDING", "APPROVED", "MODIFIED", "REJECTED"]
+
+# Projection fields to prevent SELECT * and over-fetching from database
+ESCALATION_FIELDS_PROJECTION = (
+    "id, dispute_id, run_id, action_type, tool_name, proposed_parameters, "
+    "generated_context, status, suggested_action, human_verdict, "
+    "modified_parameters, officer_notes, created_at, resolved_at"
+)
 
 class HITLActionProposal(BaseModel):
     id: Optional[str] = None
@@ -56,14 +64,34 @@ class HITLResumePayload(BaseModel):
     reason: str
 
 class HITLStore:
-    """Manages persistence and lifecycle of paused HITL actions."""
+    """Manages persistence, lifecycle, and memory hygiene of paused HITL actions."""
+
+    MAX_CACHE_SIZE: int = 500
 
     def __init__(self):
         # In-memory store cache for local tests, zero-latency reads, and offline resilience
         self._memory_store: Dict[str, Dict[str, Any]] = {}
 
+    def _evict_stale_cache(self) -> None:
+        """Enforces memory hygiene and automated purge of resolved actions (Section 11.4)."""
+        if len(self._memory_store) >= self.MAX_CACHE_SIZE:
+            # First pass: evict resolved records (APPROVED, MODIFIED, REJECTED)
+            resolved_keys = [
+                k for k, v in self._memory_store.items()
+                if v.get("status") in ("APPROVED", "MODIFIED", "REJECTED")
+            ]
+            for k in resolved_keys[:self.MAX_CACHE_SIZE // 4]:
+                self._memory_store.pop(k, None)
+
+            # Second pass: if still exceeding threshold, evict oldest records by insertion order
+            if len(self._memory_store) >= self.MAX_CACHE_SIZE:
+                excess = len(self._memory_store) - self.MAX_CACHE_SIZE + 10
+                for k in list(self._memory_store.keys())[:excess]:
+                    self._memory_store.pop(k, None)
+
     def pause_and_persist(self, proposal: HITLActionProposal) -> HITLActionProposal:
         """Pauses autonomous agent execution and safely serializes state to Supabase."""
+        self._evict_stale_cache()
         action_id = proposal.id or str(uuid.uuid4())
         proposal.id = action_id
         timestamp = proposal.created_at or time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
@@ -117,10 +145,10 @@ class HITLStore:
         return proposal
 
     def get_pending_actions(self) -> List[Dict[str, Any]]:
-        """Returns all actions currently awaiting human review."""
+        """Returns all actions currently awaiting human review with strict data projection."""
         if supabase:
             try:
-                res = supabase.table("human_escalations").select("*").eq("status", "PENDING").execute()
+                res = supabase.table("human_escalations").select(ESCALATION_FIELDS_PROJECTION).eq("status", "PENDING").execute()
                 if res.data:
                     # Sync into local memory store
                     for item in res.data:
@@ -132,10 +160,10 @@ class HITLStore:
         return [v for v in self._memory_store.values() if v.get("status") == "PENDING"]
 
     def get_action_by_id(self, action_id: str) -> Optional[Dict[str, Any]]:
-        """Retrieves a single action record by ID."""
+        """Retrieves a single action record by ID with strict data projection."""
         if supabase:
             try:
-                res = supabase.table("human_escalations").select("*").eq("id", action_id).execute()
+                res = supabase.table("human_escalations").select(ESCALATION_FIELDS_PROJECTION).eq("id", action_id).execute()
                 if res.data and len(res.data) > 0:
                     self._memory_store[action_id] = res.data[0]
                     return res.data[0]

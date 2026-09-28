@@ -2,6 +2,7 @@ from typing import Dict, Any
 from app.agents.state import FinResolveState
 from app.safety.hitl_store import HITLActionProposal, hitl_store
 from app.core.telemetry import get_execution_context
+from app.core.sanitizer import mask_account_number
 
 async def hitl_gate_node(state: FinResolveState) -> Dict[str, Any]:
     """State-Preserving Human-in-the-Loop checkpoint for irreversible mutations and breaker trips.
@@ -69,6 +70,7 @@ async def hitl_gate_node(state: FinResolveState) -> Dict[str, Any]:
             "action_type": action_type,
             "tool_name": tool_name,
             "proposed_parameters": proposed_params,
+            "masked_account": mask_account_number(proposed_params.get("account_no")),
             "status": "PENDING_APPROVAL"
         }
     })

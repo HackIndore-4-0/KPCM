@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.api.v1 import disputes, stream, ombudsman, mocks, telemetry
+from app.api.v1 import disputes, stream, ombudsman, mocks, telemetry, auth
 
 app = FastAPI(
     title="FinResolve Agentic Engine API",
@@ -17,6 +17,7 @@ app.add_middleware(
 )
 
 # Mount API routers
+app.include_router(auth.router, prefix="/api/v1/auth", tags=["Authentication & JWT"])
 app.include_router(disputes.router, prefix="/api/v1/disputes", tags=["Disputes"])
 app.include_router(stream.router, prefix="/api/v1/stream", tags=["Streaming Traces"])
 app.include_router(ombudsman.router, prefix="/api/v1/ombudsman", tags=["Ombudsman HITL"])

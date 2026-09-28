@@ -22,3 +22,9 @@ dependencies = [
     "sse-starlette>=2.0.0",
     "pytest>=8.0.0",
 ]
+
+[tool.pytest.ini_options]
+filterwarnings = [
+    "ignore::DeprecationWarning",
+    "ignore::UserWarning",
+]

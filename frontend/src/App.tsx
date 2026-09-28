@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Scale } from 'lucide-react';
+import { Scale, Zap } from 'lucide-react';
 import { LandingHero } from './components/landing/LandingHero';
 import { SubmitGrievance } from './components/citizen/SubmitGrievance';
 import { CaseDetail } from './components/citizen/CaseDetail';
 import { OmbudsmanDashboard } from './components/ombudsman/OmbudsmanDashboard';
+import { GlowCursorTrail } from './components/ui/glow-cursor-trail';
 import { Dispute, LedgerRecord, AgentTrace } from './types';
 import { SCENARIO_DATA } from './lib/mockData';
 import { useDisputeStream } from './hooks/useDisputeStream';
@@ -12,20 +13,24 @@ import { apiClient } from './lib/api';
 
 type ActiveScreen = 'LANDING' | 'SUBMIT' | 'CASE_DETAIL' | 'OMBUDSMAN';
 
+const NAV_TABS = [
+  { id: 'LANDING', label: 'Overview' },
+  { id: 'SUBMIT', label: 'Lodge Grievance' },
+  { id: 'CASE_DETAIL', label: 'Case Details' },
+  { id: 'OMBUDSMAN', label: 'Ombudsman' },
+] as const;
+
 export const App: React.FC = () => {
   const [currentScreen, setCurrentScreen] = useState<ActiveScreen>('LANDING');
 
-  // Core Dispute State
   const initialData = SCENARIO_DATA['SCENARIO_A'];
   const [dispute, setDispute] = useState<Dispute>(initialData.dispute);
   const [ledgers, setLedgers] = useState<LedgerRecord[]>(initialData.ledgers);
   const [traces, setTraces] = useState<AgentTrace[]>(initialData.traces);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Hook into real SSE if dispute_id changes
   const { traces: sseTraces } = useDisputeStream(dispute?.dispute_id || null);
 
-  // Keyboard Shortcuts for Demo Pitching ([1], [2], [3] for scenarios)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (['INPUT', 'TEXTAREA'].includes((e.target as HTMLElement)?.tagName)) return;
@@ -37,7 +42,6 @@ export const App: React.FC = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  // Format real-time SSE traces if available
   useEffect(() => {
     if (sseTraces && sseTraces.length > 0) {
       const formatted: AgentTrace[] = sseTraces.map((st) => ({
@@ -57,36 +61,22 @@ export const App: React.FC = () => {
       setDispute(data.dispute);
       setLedgers(data.ledgers);
       setTraces(data.traces);
-      if (presetId === 'SCENARIO_B') {
-        setCurrentScreen('OMBUDSMAN');
-      } else {
-        setCurrentScreen('CASE_DETAIL');
-      }
+      setCurrentScreen(presetId === 'SCENARIO_B' ? 'OMBUDSMAN' : 'CASE_DETAIL');
     }
   };
 
-  // Run Progressive Trace Animation for Demo Resilience
   const runProgressiveSimulation = (scenarioKey: string) => {
     const data = SCENARIO_DATA[scenarioKey];
     if (!data) return;
-
     setIsLoading(true);
     setTraces([]);
-    setDispute({
-      ...data.dispute,
-      status: 'INVESTIGATING',
-      final_resolution: undefined,
-    });
+    setDispute({ ...data.dispute, status: 'INVESTIGATING', final_resolution: undefined });
     setCurrentScreen('CASE_DETAIL');
-
     const stepTraces = data.traces;
     let stepIndex = 0;
-
     const interval = setInterval(() => {
       if (stepIndex < stepTraces.length) {
-        const nextTrace = stepTraces[stepIndex];
-        setTraces((prev) => [...prev, nextTrace]);
-        stepIndex++;
+        setTraces((prev) => [...prev, stepTraces[stepIndex++]]);
       } else {
         clearInterval(interval);
         setIsLoading(false);
@@ -96,14 +86,12 @@ export const App: React.FC = () => {
     }, 600);
   };
 
-  // Handle Complaint Submission from citizen
   const handleGrievanceSubmit = async (
     complaintText: string,
     evidenceUrls: string[],
     citizenData: { name: string; contact: string }
   ) => {
     setIsLoading(true);
-
     try {
       const res = await apiClient.post('/api/v1/disputes/', {
         citizen_name: citizenData.name,
@@ -111,11 +99,9 @@ export const App: React.FC = () => {
         complaint_text: complaintText,
         evidence_urls: evidenceUrls,
       });
-
       setDispute(res.data);
       setCurrentScreen('CASE_DETAIL');
     } catch {
-      // Offline fallback simulation
       if (complaintText.includes('80,000') || complaintText.toLowerCase().includes('fraud')) {
         runProgressiveSimulation('SCENARIO_B');
       } else if (complaintText.toLowerCase().includes('pension')) {
@@ -128,7 +114,6 @@ export const App: React.FC = () => {
     }
   };
 
-  // Handle Ombudsman Action
   const handleOmbudsmanDecision = (decision: 'APPROVE' | 'MODIFY' | 'REJECT', notes: string) => {
     setDispute((prev) => {
       if (!prev) return prev;
@@ -150,7 +135,10 @@ export const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-sky-500 selection:text-white">
+    <div className="min-h-screen bg-[#05060a] text-[#e6e8ec] flex flex-col font-sans selection:bg-cyan-500/30 selection:text-cyan-200">
+      {/* Custom glow/trail cursor — mounted once here at root */}
+      <GlowCursorTrail />
+
       <AnimatePresence mode="wait">
         {currentScreen === 'LANDING' ? (
           <motion.div
@@ -176,68 +164,66 @@ export const App: React.FC = () => {
             transition={{ duration: 0.3 }}
             className="min-h-screen flex flex-col"
           >
-            {/* Calm, Trustworthy Civic Header */}
-            <header className="border-b border-slate-800/80 bg-slate-950/90 backdrop-blur-md sticky top-0 z-50">
+            {/* Dark neon header */}
+            <header className="border-b border-cyan-500/10 bg-[#05060a]/90 backdrop-blur-md sticky top-0 z-50">
               <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
                 {/* Brand */}
                 <motion.div
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={() => setCurrentScreen('LANDING')}
-                  className="flex items-center gap-2.5 cursor-pointer"
+                  className="flex items-center gap-2.5 cursor-pointer group"
                 >
-                  <div className="w-8 h-8 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center text-blue-400">
-                    <Scale className="w-4 h-4 text-emerald-400" />
+                  <div className="w-8 h-8 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center group-hover:border-cyan-500/40 group-hover:shadow-glow-cyan transition-all">
+                    <Scale className="w-4 h-4 text-cyan-400" />
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
-                      <span className="font-bold text-base tracking-wide text-white font-mono">
+                      <span className="font-bold text-sm tracking-wider text-[#e6e8ec] font-mono">
                         FINRESOLVE
                       </span>
-                      <span className="text-[10px] px-2 py-0.2 rounded-full bg-slate-900 border border-slate-800 text-slate-400 font-mono">
+                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-surface-800 border border-cyan-500/15 text-[#8892a4] font-mono hidden sm:inline-block">
                         Civic Redressal
                       </span>
                     </div>
                   </div>
                 </motion.div>
 
-                {/* Clean Screen Navigation */}
-                <div className="flex items-center gap-1 bg-slate-900/80 border border-slate-800 rounded-xl p-1 text-xs">
-                  {[
-                    { id: 'LANDING', label: 'Overview' },
-                    { id: 'SUBMIT', label: 'Lodge Grievance' },
-                    { id: 'CASE_DETAIL', label: 'Case Details' },
-                    { id: 'OMBUDSMAN', label: 'Ombudsman Review' },
-                  ].map((tab) => (
+                {/* Screen Navigation */}
+                <nav aria-label="App sections" className="flex items-center gap-1 bg-[#080a10]/80 border border-cyan-500/10 rounded-xl p-1 text-xs">
+                  {NAV_TABS.map((tab) => (
                     <motion.button
                       key={tab.id}
                       whileHover={{ scale: 1.03 }}
                       whileTap={{ scale: 0.97 }}
                       onClick={() => setCurrentScreen(tab.id as ActiveScreen)}
-                      className={`px-3 py-1.5 rounded-lg font-medium transition-colors cursor-pointer ${
+                      className={`px-3 py-1.5 rounded-lg font-medium transition-all cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-cyan-500 ${
                         currentScreen === tab.id
                           ? tab.id === 'OMBUDSMAN'
-                            ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
-                            : 'bg-slate-800 text-white'
-                          : 'text-slate-400 hover:text-white'
+                            ? 'bg-violet-500/15 text-violet-300 border border-violet-500/30'
+                            : 'bg-cyan-500/10 text-cyan-300 border border-cyan-500/25'
+                          : 'text-[#8892a4] hover:text-[#e6e8ec] hover:bg-[#0d0f18]'
                       }`}
                     >
                       {tab.label}
                     </motion.button>
                   ))}
-                </div>
+                </nav>
 
-                {/* Engine Live Status Pill */}
+                {/* Engine Status */}
                 <div className="flex items-center gap-3">
                   <span className="flex items-center gap-1.5 text-xs text-emerald-400 font-mono hidden sm:inline-flex">
-                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                    <span className="relative flex">
+                      <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-40 animate-ping" />
+                      <span className="w-2 h-2 rounded-full bg-emerald-400" />
+                    </span>
                     Engine Online
                   </span>
                 </div>
               </div>
             </header>
 
-            {/* Main Screen Content with Page-Level Animation */}
+            {/* Main Content */}
             <main className="flex-1 max-w-5xl w-full mx-auto px-4 py-6">
               <AnimatePresence mode="wait">
                 {currentScreen === 'SUBMIT' && (
@@ -255,7 +241,6 @@ export const App: React.FC = () => {
                     />
                   </motion.div>
                 )}
-
                 {currentScreen === 'CASE_DETAIL' && (
                   <motion.div
                     key="case-detail-screen-content"
@@ -274,7 +259,6 @@ export const App: React.FC = () => {
                     />
                   </motion.div>
                 )}
-
                 {currentScreen === 'OMBUDSMAN' && (
                   <motion.div
                     key="ombudsman-screen-content"
@@ -296,13 +280,13 @@ export const App: React.FC = () => {
               </AnimatePresence>
             </main>
 
-            {/* Calm, Trustworthy Footer */}
-            <footer className="border-t border-slate-800/60 bg-slate-950 py-4 px-6 text-center text-xs text-slate-500">
-              <div className="max-w-5xl mx-auto flex flex-wrap items-center justify-between gap-3 font-mono text-[11px]">
-                <span>
+            {/* Dark neon footer */}
+            <footer className="border-t border-cyan-500/10 bg-[#05060a] py-4 px-6 text-center">
+              <div className="max-w-5xl mx-auto flex flex-wrap items-center justify-between gap-3 font-mono text-[11px] text-[#4a5568]">
+                <span className="text-[#8892a4]">
                   FINRESOLVE &bull; Reserve Bank of India Integrated Ombudsman Protocol
                 </span>
-                <span className="text-slate-600">
+                <span>
                   DPSS.CO.PD.No.1164/2019-20 &bull; Mandatory T+1 Turnaround Time
                 </span>
               </div>

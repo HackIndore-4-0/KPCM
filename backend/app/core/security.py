@@ -1,21 +1,61 @@
-import re
-from typing import Dict, Any
+"""Security and JWT token authentication module for FinResolve."""
 
-def scrub_pii(text: str) -> str:
-    """
-    Scrubs sensitive Indian financial PII (Aadhaar 12-digits, PAN 10-char, Card numbers)
-    before sending payloads to LLM reasoning nodes.
-    """
-    # Scrub 12-digit Aadhaar
-    text = re.sub(r'\b\d{4}\s?\d{4}\s?\d{4}\b', '[REDACTED_AADHAAR]', text)
-    # Scrub 16-digit Card numbers
-    text = re.sub(r'\b(?:\d{4}[-\s]?){3}\d{4}\b', '[REDACTED_CARD_NUMBER]', text)
-    # Scrub 10-character PAN
-    text = re.sub(r'\b[A-Z]{5}[0-9]{4}[A-Z]{1}\b', '[REDACTED_PAN]', text)
-    return text
+import datetime
+from typing import Optional, Dict, Any
+import jwt
+from fastapi import HTTPException, Security, status
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from app.core.config import settings
 
-def sanitize_citizen_payload(payload: Dict[str, Any]) -> Dict[str, Any]:
-    sanitized = payload.copy()
-    if "complaint_text" in sanitized:
-        sanitized["complaint_text"] = scrub_pii(sanitized["complaint_text"])
-    return sanitized
+security_bearer = HTTPBearer(auto_error=False)
+
+def create_access_token(
+    data: Dict[str, Any],
+    expires_delta: Optional[datetime.timedelta] = None
+) -> str:
+    """Generates a signed JWT access token."""
+    to_encode = data.copy()
+    if expires_delta:
+        expire = datetime.datetime.now(datetime.timezone.utc) + expires_delta
+    else:
+        expire = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(
+            minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES
+        )
+    to_encode.update({"exp": expire, "iat": datetime.datetime.now(datetime.timezone.utc)})
+    encoded_jwt = jwt.encode(
+        to_encode,
+        settings.JWT_SECRET_KEY,
+        algorithm=settings.JWT_ALGORITHM
+    )
+    return encoded_jwt
+
+def decode_access_token(token: str) -> Dict[str, Any]:
+    """Decodes and validates a JWT access token."""
+    try:
+        payload = jwt.decode(
+            token,
+            settings.JWT_SECRET_KEY,
+            algorithms=[settings.JWT_ALGORITHM]
+        )
+        return payload
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token has expired. Please re-authenticate."
+        )
+    except jwt.PyJWTError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid authentication credentials."
+        )
+
+async def get_current_user(
+    credentials: Optional[HTTPAuthorizationCredentials] = Security(security_bearer)
+) -> Dict[str, Any]:
+    """Dependency to retrieve and verify the currently authenticated user from bearer token."""
+    if not credentials:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authorization header missing."
+        )
+    return decode_access_token(credentials.credentials)

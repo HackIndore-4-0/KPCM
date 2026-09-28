@@ -1,6 +1,7 @@
 from typing import Dict, Any
 from app.mocks.mock_service import MockFinancialEcosystem
 from app.core.telemetry import tool_execution_span
+from app.core.config import settings
 
 async def execute_bank_reversal(
     dispute_id: str,
@@ -12,7 +13,10 @@ async def execute_bank_reversal(
     """Executes an irreversible financial fund reversal in Core Banking System.
     
     Tagged with is_irreversible=True, requires_hitl=True for Challenge 2 state-preserving approval gate.
+    Validates TLS 1.3 endpoint compliance before triggering mutation.
     """
+    settings.validate_tls_endpoint(settings.CBS_REVERSAL_URL)
+    
     with tool_execution_span(
         "execute_bank_reversal",
         is_irreversible=True,
